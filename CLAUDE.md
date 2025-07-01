@@ -159,3 +159,16 @@ Use the following Puppeteer MCP commands to verify:
 - **Mid Game (30-70 numbers)**: Auto-roll unlocked, special number bonuses become important
 - **End Game (70-100 numbers)**: High bias needed for last numbers, strategic leveling critical
 - **Completion (100/100)**: Focus on maximum leveling and achievement hunting
+
+## Learning Documentation
+
+**WICHTIG**: Vor dem finalen Commit eines Issues müssen wichtige Learnings und Erkenntnisse in einer LEARNINGS.md Datei dokumentiert werden. Diese Datei dient als Wissensbasis für zukünftige Claude-Instanzen und sollte bei jedem Issue-Abschluss aktualisiert werden.
+
+Die LEARNINGS.md Datei sollte enthalten:
+- Wichtige technische Entscheidungen und deren Begründung
+- Gefundene Probleme und deren Lösungsansätze
+- Architektur-Erkenntnisse und Best Practices
+- Debugging-Erfahrungen und häufige Fallstricke
+- Performance-Optimierungen und deren Auswirkungen
+
+Diese Dokumentation ist essentiell für die kontinuierliche Verbesserung und den Wissenstransfer zwischen verschiedenen Entwicklungssitzungen.

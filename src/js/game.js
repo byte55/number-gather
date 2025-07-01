@@ -25,12 +25,36 @@ const FIBONACCI_NUMBERS = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
 
 // Initialize game
 function initGame() {
-  // Initialize all numbers 1-100
-  for (let i = 1; i <= 100; i++) {
-    gameState.numbers[i] = { count: 0, level: 0 };
+  // Check if we have saved state first
+  const hasSavedState = localStorage.getItem('numberGameState') !== null;
+  
+  if (!hasSavedState) {
+    // Only initialize fresh state if no save exists
+    initializeGameState();
+  } else {
+    // Initialize basic structure then load
+    gameState = {
+      numbers: {},
+      cooldowns: {
+        manual: { active: false, remaining: 0 },
+        auto: { active: false, remaining: 0, unlocked: false }
+      },
+      stats: {
+        totalRolls: 0,
+        collectedCount: 0,
+        currentStreak: 0
+      }
+    };
+    
+    // Initialize all numbers to default
+    for (let i = 1; i <= 100; i++) {
+      gameState.numbers[i] = { count: 0, level: 0 };
+    }
+    
+    // Load saved state
+    loadGameState();
   }
   
-  loadGameState();
   updateUI();
   setupEventListeners();
   startCooldownTimer();
@@ -143,16 +167,10 @@ function calculateBias() {
 
 // Process roll result
 function processRollResult(number) {
-  const numberData = gameState.numbers[number];
-  const wasNew = numberData.count === 0;
+  const wasNew = gameState.numbers[number].count === 0;
   
-  numberData.count++;
-  
-  // Update level based on count
-  if (numberData.count >= 100) numberData.level = 4;
-  else if (numberData.count >= 50) numberData.level = 3;
-  else if (numberData.count >= 25) numberData.level = 2;
-  else if (numberData.count >= 10) numberData.level = 1;
+  // Use the updateNumber utility
+  updateNumber(number, 1);
   
   // Update collected count if new
   if (wasNew) {
@@ -199,6 +217,106 @@ function startCooldownTimer() {
     
     updateUI();
   }, 100);
+}
+
+// State Management Utilities
+function updateNumber(num, increment = 1) {
+  if (num < 1 || num > 100) return;
+  
+  const numberData = gameState.numbers[num];
+  const oldLevel = numberData.level;
+  
+  numberData.count += increment;
+  
+  // Update level based on new count
+  const newLevel = getNumberLevel(numberData.count);
+  if (newLevel !== oldLevel) {
+    numberData.level = newLevel;
+    console.log(`Number ${num} reached level ${newLevel}!`);
+  }
+  
+  return numberData;
+}
+
+function getNumberLevel(count) {
+  if (count >= 100) return 4;
+  if (count >= 50) return 3;
+  if (count >= 25) return 2;
+  if (count >= 10) return 1;
+  return 0;
+}
+
+function calculateLevelProgress(count) {
+  const currentLevel = getNumberLevel(count);
+  
+  // Define thresholds
+  const thresholds = [0, 10, 25, 50, 100];
+  
+  if (currentLevel >= 4) {
+    // Max level reached
+    return { 
+      currentLevel: 4, 
+      nextLevel: null, 
+      progress: 100, 
+      remaining: 0 
+    };
+  }
+  
+  const currentThreshold = thresholds[currentLevel];
+  const nextThreshold = thresholds[currentLevel + 1];
+  const progress = ((count - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
+  const remaining = nextThreshold - count;
+  
+  return {
+    currentLevel,
+    nextLevel: currentLevel + 1,
+    progress: Math.floor(progress),
+    remaining
+  };
+}
+
+// Additional utility functions
+function getCollectedNumbers() {
+  return Object.keys(gameState.numbers)
+    .filter(num => gameState.numbers[num].count > 0)
+    .map(Number);
+}
+
+function getLeveledNumbers(minLevel = 1) {
+  return Object.keys(gameState.numbers)
+    .filter(num => gameState.numbers[num].level >= minLevel)
+    .map(Number);
+}
+
+function getSpecialNumberBonus(num) {
+  let bonus = 1.0;
+  
+  if (PRIME_NUMBERS.includes(num)) {
+    bonus *= 1.5;
+  }
+  if (FIBONACCI_NUMBERS.includes(num)) {
+    bonus *= 1.2;
+  }
+  
+  return bonus;
+}
+
+function getCooldownReduction() {
+  let reduction = 0;
+  
+  // Divisible by 5 bonus (only level 1+ numbers)
+  const divisibleBy5 = getLeveledNumbers(1).filter(n => n % 5 === 0);
+  reduction += divisibleBy5.length * 2; // 2% per number
+  
+  // Level sum bonus
+  let levelSum = 0;
+  for (let i = 1; i <= 100; i++) {
+    levelSum += gameState.numbers[i].level;
+  }
+  reduction += levelSum * 1; // 1% per total level
+  
+  // Cap at 85%
+  return Math.min(reduction, 85);
 }
 
 // UI Updates
@@ -281,8 +399,27 @@ function updateGrid() {
       cell.classList.add('collected');
     }
     
-    // Update title with count info
-    cell.title = `Number ${i}\nCount: ${numberData.count}\nLevel: ${numberData.level}`;
+    // Update title with detailed info
+    const progress = calculateLevelProgress(numberData.count);
+    let title = `Number ${i}\nCount: ${numberData.count}\nLevel: ${numberData.level}`;
+    
+    if (progress.nextLevel !== null) {
+      title += `\nProgress: ${progress.progress}% (${progress.remaining} more to level ${progress.nextLevel})`;
+    } else {
+      title += `\nMax level reached!`;
+    }
+    
+    // Add special properties
+    const specialProps = [];
+    if (PRIME_NUMBERS.includes(i)) specialProps.push('Prime (1.5x bias)');
+    if (FIBONACCI_NUMBERS.includes(i)) specialProps.push('Fibonacci (1.2x bias)');
+    if (i % 5 === 0 && numberData.level >= 1) specialProps.push('Divisible by 5 (-2% cooldown)');
+    
+    if (specialProps.length > 0) {
+      title += '\n\nSpecial: ' + specialProps.join(', ');
+    }
+    
+    cell.title = title;
   }
 }
 
@@ -301,25 +438,61 @@ function loadGameState() {
     if (saved) {
       const loaded = JSON.parse(saved);
       
-      // Merge with default state to handle new properties
-      gameState = {
-        ...gameState,
-        ...loaded,
-        cooldowns: {
-          ...gameState.cooldowns,
-          ...loaded.cooldowns
-        },
-        stats: {
-          ...gameState.stats,
-          ...loaded.stats
-        }
-      };
-      
-      console.log('Game state loaded');
+      // Validate loaded data structure
+      if (loaded && loaded.numbers && loaded.cooldowns && loaded.stats) {
+        // Deep merge to preserve structure and handle missing properties
+        gameState.numbers = { ...gameState.numbers, ...loaded.numbers };
+        gameState.cooldowns = {
+          manual: {
+            ...gameState.cooldowns.manual,
+            ...(loaded.cooldowns.manual || {})
+          },
+          auto: {
+            ...gameState.cooldowns.auto,
+            ...(loaded.cooldowns.auto || {})
+          }
+        };
+        gameState.stats = { ...gameState.stats, ...(loaded.stats || {}) };
+        
+        // Reset active cooldowns to prevent stuck states
+        gameState.cooldowns.manual.active = false;
+        gameState.cooldowns.manual.remaining = 0;
+        gameState.cooldowns.auto.active = false;
+        gameState.cooldowns.auto.remaining = 0;
+        
+        console.log('Game state loaded successfully');
+      } else {
+        console.warn('Invalid save data, starting fresh');
+        initializeGameState();
+      }
     }
   } catch (error) {
     console.error('Failed to load game state:', error);
+    initializeGameState();
   }
+}
+
+function initializeGameState() {
+  // Reset to default state
+  gameState = {
+    numbers: {},
+    cooldowns: {
+      manual: { active: false, remaining: 0 },
+      auto: { active: false, remaining: 0, unlocked: false }
+    },
+    stats: {
+      totalRolls: 0,
+      collectedCount: 0,
+      currentStreak: 0
+    }
+  };
+  
+  // Initialize all numbers 1-100
+  for (let i = 1; i <= 100; i++) {
+    gameState.numbers[i] = { count: 0, level: 0 };
+  }
+  
+  console.log('Game state initialized (fresh start)');
 }
 
 // Initialize when page loads
