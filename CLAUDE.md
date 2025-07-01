@@ -13,6 +13,21 @@ This is a browser-based "Number Collection Game" where players collect and level
 - **Build Tools**: None required - pure client-side implementation
 - **Dependencies**: None - completely self-contained
 
+## Project Structure
+
+```
+/
+├── index.html          # Main HTML file (stays in root for GitHub Pages)
+├── src/
+│   ├── css/
+│   │   └── styles.css  # Main stylesheet with theme support
+│   └── js/
+│       └── game.js     # Main game logic
+├── CLAUDE.md          # Project guidance for Claude
+├── GAME.md            # Game documentation
+└── TODO.md            # Task tracking
+```
+
 ## Development Commands
 
 Since this is a vanilla JavaScript project, there are no build, test, or lint commands. Development workflow:
@@ -24,7 +39,7 @@ Since this is a vanilla JavaScript project, there are no build, test, or lint co
 ## GitHub Actions and Development Notes
 
 - GitHub actions können über "gh" gemacht werden. labels für issues dürfen erstellt werden, wenn diese noch nicht existieren
-- **Issue Bearbeitung**: Issues sollen von alt nach neu bearbeitet werden mit `gh issue list --state open --sort created --order asc`
+- **Issue Bearbeitung**: Issues sollen von alt nach neu bearbeitet werden mit `gh issue list --state open --search "sort:created-asc"`
 - **Git Workflow**:
   - Wenn ein Issue bearbeitet wird und die Accept Criteria erfüllt sind, dürfen die Code-Änderungen committed und gepusht werden
   - Zwischen-Commits für Zwischenschritte sind erwünscht
