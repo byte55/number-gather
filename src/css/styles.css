@@ -262,6 +262,82 @@ body {
   box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.5);
 }
 
+/* Tooltip Styles */
+.tooltip {
+  position: absolute;
+  background-color: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 12px var(--shadow-color);
+  z-index: 1000;
+  font-size: 0.85rem;
+  min-width: 200px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.tooltip.show {
+  opacity: 1;
+}
+
+.tooltip-header {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 4px;
+}
+
+.tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+  color: var(--text-secondary);
+}
+
+.tooltip-label {
+  font-weight: 500;
+}
+
+.tooltip-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.tooltip-progress {
+  margin-top: 8px;
+}
+
+.tooltip-progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.tooltip-progress-fill {
+  height: 100%;
+  background-color: var(--button-primary);
+  transition: width 0.3s ease;
+}
+
+.tooltip-special {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.tooltip-special-item {
+  margin: 2px 0;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .game-container {

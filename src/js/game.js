@@ -57,6 +57,7 @@ function initGame() {
   
   updateUI();
   setupEventListeners();
+  setupTooltip();
   startCooldownTimer();
   
   console.log('Game initialized');
@@ -399,28 +400,146 @@ function updateGrid() {
       cell.classList.add('collected');
     }
     
-    // Update title with detailed info
-    const progress = calculateLevelProgress(numberData.count);
-    let title = `Number ${i}\nCount: ${numberData.count}\nLevel: ${numberData.level}`;
-    
-    if (progress.nextLevel !== null) {
-      title += `\nProgress: ${progress.progress}% (${progress.remaining} more to level ${progress.nextLevel})`;
-    } else {
-      title += `\nMax level reached!`;
-    }
-    
-    // Add special properties
-    const specialProps = [];
-    if (PRIME_NUMBERS.includes(i)) specialProps.push('Prime (1.5x bias)');
-    if (FIBONACCI_NUMBERS.includes(i)) specialProps.push('Fibonacci (1.2x bias)');
-    if (i % 5 === 0 && numberData.level >= 1) specialProps.push('Divisible by 5 (-2% cooldown)');
-    
-    if (specialProps.length > 0) {
-      title += '\n\nSpecial: ' + specialProps.join(', ');
-    }
-    
-    cell.title = title;
+    // Remove title attribute since we're using custom tooltips
+    cell.removeAttribute('title');
   }
+}
+
+// Tooltip functionality
+let tooltipElement = null;
+let tooltipTimeout = null;
+
+function setupTooltip() {
+  // Create tooltip element
+  tooltipElement = document.createElement('div');
+  tooltipElement.className = 'tooltip';
+  document.body.appendChild(tooltipElement);
+  
+  // Add event listeners to all number cells
+  document.addEventListener('mouseover', handleTooltipShow);
+  document.addEventListener('mouseout', handleTooltipHide);
+  document.addEventListener('mousemove', handleTooltipMove);
+}
+
+function handleTooltipShow(e) {
+  const cell = e.target.closest('.number-cell');
+  if (!cell) return;
+  
+  clearTimeout(tooltipTimeout);
+  tooltipTimeout = setTimeout(() => {
+    const number = parseInt(cell.textContent);
+    showTooltip(number, e.pageX, e.pageY);
+  }, 300); // Small delay to prevent tooltip spam
+}
+
+function handleTooltipHide(e) {
+  const cell = e.target.closest('.number-cell');
+  if (!cell) return;
+  
+  clearTimeout(tooltipTimeout);
+  hideTooltip();
+}
+
+function handleTooltipMove(e) {
+  if (tooltipElement.classList.contains('show')) {
+    positionTooltip(e.pageX, e.pageY);
+  }
+}
+
+function showTooltip(number, x, y) {
+  const numberData = gameState.numbers[number];
+  const progress = calculateLevelProgress(numberData.count);
+  
+  // Build tooltip content
+  let html = `<div class="tooltip-header">Number ${number}</div>`;
+  
+  // Basic stats
+  html += `
+    <div class="tooltip-row">
+      <span class="tooltip-label">Rolls:</span>
+      <span class="tooltip-value">${numberData.count}</span>
+    </div>
+    <div class="tooltip-row">
+      <span class="tooltip-label">Level:</span>
+      <span class="tooltip-value">${numberData.level}</span>
+    </div>
+  `;
+  
+  // Progress bar
+  if (progress.nextLevel !== null) {
+    html += `
+      <div class="tooltip-progress">
+        <div class="tooltip-row">
+          <span class="tooltip-label">Next Level:</span>
+          <span class="tooltip-value">${progress.remaining} rolls needed</span>
+        </div>
+        <div class="tooltip-progress-bar">
+          <div class="tooltip-progress-fill" style="width: ${progress.progress}%"></div>
+        </div>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="tooltip-progress">
+        <div class="tooltip-row">
+          <span class="tooltip-label">Status:</span>
+          <span class="tooltip-value">Max Level!</span>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Special properties
+  const specialProps = [];
+  if (PRIME_NUMBERS.includes(number)) {
+    specialProps.push('<div class="tooltip-special-item">★ Prime Number (1.5x bias multiplier)</div>');
+  }
+  if (FIBONACCI_NUMBERS.includes(number)) {
+    specialProps.push('<div class="tooltip-special-item">◆ Fibonacci Number (1.2x bias multiplier)</div>');
+  }
+  if (number % 5 === 0) {
+    if (numberData.level >= 1) {
+      specialProps.push('<div class="tooltip-special-item">÷5 Divisible by 5 (-2% cooldown)</div>');
+    } else {
+      specialProps.push('<div class="tooltip-special-item">÷5 Divisible by 5 (cooldown bonus at Level 1+)</div>');
+    }
+  }
+  
+  if (specialProps.length > 0) {
+    html += '<div class="tooltip-special">' + specialProps.join('') + '</div>';
+  }
+  
+  tooltipElement.innerHTML = html;
+  positionTooltip(x, y);
+  tooltipElement.classList.add('show');
+}
+
+function hideTooltip() {
+  tooltipElement.classList.remove('show');
+}
+
+function positionTooltip(x, y) {
+  const tooltip = tooltipElement;
+  const tooltipRect = tooltip.getBoundingClientRect();
+  const padding = 10;
+  
+  // Calculate position
+  let left = x + padding;
+  let top = y + padding;
+  
+  // Check if tooltip goes off the right edge
+  if (left + tooltipRect.width > window.innerWidth - padding) {
+    left = x - tooltipRect.width - padding;
+  }
+  
+  // Check if tooltip goes off the bottom edge
+  if (top + tooltipRect.height > window.innerHeight - padding) {
+    top = y - tooltipRect.height - padding;
+  }
+  
+  // Apply position
+  tooltip.style.left = left + 'px';
+  tooltip.style.top = top + 'px';
 }
 
 // Save/Load Game State
