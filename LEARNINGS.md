@@ -2,54 +2,39 @@
 
 ## Phase 2: Game State und Datenverwaltung
 
-### Key Technical Decisions
+### Wichtige Erkenntnisse
 
-1. **State Initialization Order**: 
-   - Problem: Initial implementation called `initializeGameState()` before `loadGameState()`, which caused the fresh state to overwrite saved data
-   - Solution: Check for existing localStorage data first, only initialize fresh state if no save exists
-   - This prevents data loss on page refresh
+1. **State Structure Design**
+   - Die hierarchische Struktur des gameState Objekts (numbers, cooldowns, stats) ermöglicht eine klare Trennung der verschiedenen Spielaspekte
+   - Jede Nummer wird als eigenes Objekt mit `count` und `level` gespeichert, was flexible Erweiterungen ermöglicht
 
-2. **State Structure Design**:
-   - Used nested object structure for game state with clear separation of concerns:
-     - `numbers`: Individual number tracking (count, level)
-     - `cooldowns`: Timing state management 
-     - `stats`: Game-wide statistics
-   - This structure allows for easy extension and partial updates
+2. **LocalStorage Implementation**
+   - Beim Laden des gespeicherten States ist es wichtig, die Cooldown-States zurückzusetzen (active: false), um "stuck states" nach einem Reload zu vermeiden
+   - Deep merging beim Laden erhält die Struktur und behandelt fehlende Properties gracefully
+   - Try-catch Blöcke sind essentiell für robuste LocalStorage-Operationen
 
-3. **LocalStorage Persistence**:
-   - Implemented defensive loading with validation to handle corrupted saves
-   - Reset active cooldowns on load to prevent stuck states
-   - Deep merge strategy preserves data integrity while allowing for schema evolution
+3. **State Initialization Pattern**
+   - Die Unterscheidung zwischen "fresh start" und "load existing" verhindert das Überschreiben von gespeicherten Daten
+   - Alle 100 Zahlen müssen explizit initialisiert werden (1-100), nicht 0-99
 
-### Utility Functions Created
+4. **State Management Utilities**
+   - `updateNumber()` kapselt sowohl das Erhöhen des Counters als auch die Level-Berechnung
+   - `calculateLevelProgress()` gibt detaillierte Informationen für UI-Updates zurück
+   - Die Trennung von State-Logik und UI-Updates macht den Code wartbarer
 
-1. **updateNumber()**: Centralized number update logic with automatic level calculation
-2. **getNumberLevel()**: Pure function for level determination based on count thresholds
-3. **calculateLevelProgress()**: Provides detailed progress information for UI
-4. **getSpecialNumberBonus()**: Calculates multipliers for prime/fibonacci numbers
-5. **getCooldownReduction()**: Computes total cooldown reduction from various sources
+5. **Best Practices**
+   - State-Updates sollten immer von einem `saveGameState()` gefolgt werden
+   - UI-Updates sollten nach State-Änderungen erfolgen, nicht davor
+   - Utility-Funktionen wie `getCollectedNumbers()` und `getLeveledNumbers()` vereinfachen komplexe Queries
 
-### Performance Considerations
+### Häufige Fallstricke
 
-- State saves are triggered after each roll (could be debounced in future if needed)
-- Grid updates only modify changed cells rather than recreating entire grid
-- Cooldown timers run at 100ms intervals for smooth UI updates
+1. **Cooldown State Persistence**: Aktive Cooldowns sollten NICHT über Reloads persistiert werden
+2. **Array vs Object**: Numbers als Object (keyed by number) statt Array für O(1) Zugriff
+3. **Level Thresholds**: Die Level-Schwellen (10, 25, 50, 100) müssen konsistent verwendet werden
 
-### Common Pitfalls
+### Performance-Optimierungen
 
-1. **State Overwriting**: Always check if saved state exists before initializing fresh state
-2. **Cooldown Persistence**: Active cooldowns should be reset on page load to prevent stuck states
-3. **Deep Object Merging**: Use proper deep merge for nested state objects to preserve all data
-
-### Testing Insights
-
-- Puppeteer testing revealed the state persistence bug immediately
-- Console logging is essential for debugging state management issues
-- Visual verification through screenshots helps confirm UI state matches data state
-
-### Future Improvements
-
-- Consider implementing state versioning for migration support
-- Add state validation/sanitization for security
-- Implement export/import functionality for game saves
-- Add compression for localStorage to handle larger save states
+1. **Batch UI Updates**: `updateUI()` aktualisiert alle UI-Elemente in einem Durchgang
+2. **Conditional Grid Creation**: Das Grid wird nur einmal erstellt, danach nur noch aktualisiert
+3. **Debounced Saves**: Könnte in Zukunft implementiert werden bei häufigeren State-Updates
