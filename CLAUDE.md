@@ -21,6 +21,10 @@ Since this is a vanilla JavaScript project, there are no build, test, or lint co
 2. **Testing changes**: Refresh the browser (F5 or Cmd+R)
 3. **Debugging**: Use browser developer tools (F12)
 
+## GitHub Actions and Development Notes
+
+- GitHub actions können über "gh" gemacht werden. labels für issues dürfen erstellt werden, wenn diese noch nicht existieren
+
 ## Architecture Overview
 
 ### Game State Structure
