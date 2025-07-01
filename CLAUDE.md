@@ -24,6 +24,7 @@ Since this is a vanilla JavaScript project, there are no build, test, or lint co
 ## GitHub Actions and Development Notes
 
 - GitHub actions können über "gh" gemacht werden. labels für issues dürfen erstellt werden, wenn diese noch nicht existieren
+- **Issue Bearbeitung**: Issues sollen von alt nach neu bearbeitet werden mit `gh issue list --state open --sort created --order asc`
 - **Git Workflow**:
   - Wenn ein Issue bearbeitet wird und die Accept Criteria erfüllt sind, dürfen die Code-Änderungen committed und gepusht werden
   - Zwischen-Commits für Zwischenschritte sind erwünscht
