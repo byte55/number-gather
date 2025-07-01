@@ -96,16 +96,25 @@ function toggleAutoRoll() {
 
 // Main roll logic
 function performRoll() {
+  // Calculate current bias
   const bias = calculateBias();
+  
+  // Generate random number between 1-100
   const roll = rollWithBias(bias);
   
+  // Process the result
   processRollResult(roll);
   gameState.stats.totalRolls++;
   
+  // Update UI and save state
   updateUI();
   saveGameState();
   
-  console.log(`Rolled: ${roll} (Bias: ${bias.toFixed(1)}%)`);
+  // Log result with bias info
+  const missingCount = getMissingNumbers().length;
+  console.log(`Rolled: ${roll} | Bias: ${bias.toFixed(1)}% | Missing: ${missingCount}/100`);
+  
+  return roll;
 }
 
 // Roll with bias calculation
@@ -113,14 +122,14 @@ function rollWithBias(biasPercentage) {
   const random = Math.random() * 100;
   
   if (random < biasPercentage) {
-    // Roll from missing numbers
-    const missingNumbers = getMissingNumbers();
-    if (missingNumbers.length > 0) {
-      return missingNumbers[Math.floor(Math.random() * missingNumbers.length)];
+    // Use bias to select from missing numbers
+    const target = selectBiasedTarget(biasPercentage);
+    if (target !== null) {
+      return target;
     }
   }
   
-  // Regular random roll
+  // Regular random roll (1-100)
   return Math.floor(Math.random() * 100) + 1;
 }
 
@@ -133,6 +142,45 @@ function getMissingNumbers() {
     }
   }
   return missing;
+}
+
+// Get numbers near missing numbers (±3 range)
+function getNearMissingPool() {
+  const missingNumbers = getMissingNumbers();
+  const nearMissing = new Set();
+  
+  missingNumbers.forEach(num => {
+    // Add numbers within ±3 range of missing numbers
+    for (let offset = -3; offset <= 3; offset++) {
+      const nearNum = num + offset;
+      if (nearNum >= 1 && nearNum <= 100) {
+        nearMissing.add(nearNum);
+      }
+    }
+  });
+  
+  return Array.from(nearMissing);
+}
+
+// Select target based on bias percentage
+function selectBiasedTarget(biasPercentage) {
+  const missingNumbers = getMissingNumbers();
+  
+  // No missing numbers, return null
+  if (missingNumbers.length === 0) {
+    return null;
+  }
+  
+  // High bias (>50%): Use near-missing pool
+  if (biasPercentage > 50) {
+    const nearMissingPool = getNearMissingPool();
+    if (nearMissingPool.length > 0) {
+      return nearMissingPool[Math.floor(Math.random() * nearMissingPool.length)];
+    }
+  }
+  
+  // Normal bias: Select from missing numbers only
+  return missingNumbers[Math.floor(Math.random() * missingNumbers.length)];
 }
 
 // Calculate current bias
