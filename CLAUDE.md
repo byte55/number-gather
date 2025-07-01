@@ -24,8 +24,19 @@ Since this is a vanilla JavaScript project, there are no build, test, or lint co
 ## GitHub Actions and Development Notes
 
 - GitHub actions können über "gh" gemacht werden. labels für issues dürfen erstellt werden, wenn diese noch nicht existieren
+- **Git Workflow**:
+  - Wenn ein Issue bearbeitet wird und die Accept Criteria erfüllt sind, dürfen die Code-Änderungen committed und gepusht werden
+  - Zwischen-Commits für Zwischenschritte sind erwünscht
+  - Pushes nur für fertige Issues (alle Tasks des Issues müssen abgeschlossen sein)
+  - Commit-Messages sollten die Issue-Nummer referenzieren (z.B. "Implement Phase 1: Basic HTML structure #1")
 
 ## Architecture Overview
+
+### UI Theme System
+- **Automatic Dark/Light Mode**: Das Spiel soll automatisch das System-Theme (dark/light) erkennen und alle UI-Elemente entsprechend anpassen
+- Verwendung von CSS `@media (prefers-color-scheme: dark)` für automatische Anpassung
+- CSS Custom Properties (CSS Variables) für Theme-Farben
+- Kein manueller Toggle nötig - folgt den Systemeinstellungen des Users
 
 ### Game State Structure
 The game maintains state in a JavaScript object that is persisted to LocalStorage:
@@ -118,6 +129,7 @@ When implementing new features, always test them using the Puppeteer MCP tool to
 - UI elements render and behave properly
 
 **Game URL for testing**: `http://localhost:63342/number-gather/index.html`
+**Production URL**: `https://byte55.github.io/number-gather/`
 
 Use the following Puppeteer MCP commands to verify:
 1. Navigate to the game URL

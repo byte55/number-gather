@@ -5,6 +5,9 @@
 - [x] CLAUDE.md mit Projektspezifikationen
 - [ ] HTML-Grundstruktur in index.html erstellen
 - [ ] CSS-Datei (styles.css) anlegen
+  - [ ] CSS Custom Properties für Theme-Farben
+  - [ ] @media (prefers-color-scheme: dark) für automatisches Dark Theme
+  - [ ] Basis-Styling für Light und Dark Mode
 - [ ] JavaScript-Datei (game.js) anlegen
 - [ ] Basis HTML-Layout mit Container für Grid, Controls und Stats
 
@@ -172,8 +175,8 @@
   - [ ] Best Streaks
   - [ ] Fastest to 100
   - [ ] Roll Efficiency
-- [ ] Dark Mode Toggle
-- [ ] Verschiedene Themes/Skins
+- [x] ~~Dark Mode Toggle~~ (Automatisches System-Theme wird in Phase 1 implementiert)
+- [ ] Verschiedene Themes/Skins (zusätzlich zum automatischen Dark/Light Mode)
 
 ## Phase 12: Dokumentation und Release
 - [ ] README.md erstellen
