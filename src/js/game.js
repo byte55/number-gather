@@ -234,13 +234,19 @@ function processRollResult(number) {
 
 // Cooldown management
 function startManualCooldown() {
+  const reduction = getCooldownReduction();
+  const reducedCooldown = COOLDOWN_MANUAL * (1 - reduction / 100);
+  
   gameState.cooldowns.manual.active = true;
-  gameState.cooldowns.manual.remaining = COOLDOWN_MANUAL;
+  gameState.cooldowns.manual.remaining = Math.max(reducedCooldown, COOLDOWN_MANUAL * 0.15); // Minimum 15% of base
 }
 
 function startAutoCooldown() {
+  const reduction = getCooldownReduction();
+  const reducedCooldown = COOLDOWN_AUTO * (1 - reduction / 100);
+  
   gameState.cooldowns.auto.active = true;
-  gameState.cooldowns.auto.remaining = COOLDOWN_AUTO;
+  gameState.cooldowns.auto.remaining = Math.max(reducedCooldown, COOLDOWN_AUTO * 0.15); // Minimum 15% of base
 }
 
 function startCooldownTimer() {
@@ -392,6 +398,13 @@ function updateStats() {
   document.getElementById('collected-count').textContent = `${gameState.stats.collectedCount}/100`;
   document.getElementById('bias-value').textContent = `${calculateBias().toFixed(1)}%`;
   document.getElementById('total-rolls').textContent = gameState.stats.totalRolls;
+  
+  // Update cooldown reduction display
+  const reduction = getCooldownReduction();
+  const cooldownElement = document.getElementById('cooldown-reduction');
+  if (cooldownElement) {
+    cooldownElement.textContent = `${reduction.toFixed(1)}%`;
+  }
 }
 
 function updateButtons() {
