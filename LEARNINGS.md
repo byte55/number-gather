@@ -1,56 +1,46 @@
-# LEARNINGS.md
+# Number Gather Game - Learnings and Knowledge Base
 
-## Phase 3: UI Grid System (Issue #3)
+## Phase 4: Spezielle Zahlen-Eigenschaften
 
-### Implementation Status
-Phase 3 war bereits vollständig implementiert, als ich mit der Bearbeitung begann. Alle Anforderungen wurden erfüllt:
+### Ausgangslage
+Bei der Bearbeitung von Issue #4 stellte sich heraus, dass ein Großteil der geforderten Funktionalität bereits implementiert war:
+- Die speziellen Zahlen-Arrays (PRIME_NUMBERS und FIBONACCI_NUMBERS) waren bereits definiert
+- Die visuellen Indikatoren im Grid waren bereits implementiert
+- Die CSS-Klassen für die Styling der speziellen Zahlen waren bereits vorhanden
+- Die Bias-Berechnung berücksichtigte bereits die speziellen Eigenschaften
 
-- 10x10 Grid mit CSS Grid erstellt
-- Level-basierte Farbgebung implementiert (Grau → Weiß → Grün → Blau → Lila → Orange)
-- updateGrid() Funktion vorhanden und funktionsfähig
-- Hover-Tooltips mit detaillierten Informationen implementiert
+### Implementierte Änderungen
+Die Hauptaufgabe bestand darin, die drei Utility-Funktionen zu erstellen:
+- `isPrime(num)` - Prüft, ob eine Zahl eine Primzahl ist
+- `isFibonacci(num)` - Prüft, ob eine Zahl eine Fibonacci-Zahl ist
+- `isDivisibleBy5(num)` - Prüft, ob eine Zahl durch 5 teilbar ist
+
+Diese Funktionen wurden als einfache Wrapper implementiert, die die bereits existierenden Arrays und Modulo-Operationen nutzen.
+
+### Refactoring
+Nach der Implementierung der Utility-Funktionen wurde der bestehende Code refactored, um diese neuen Funktionen zu verwenden anstatt direkte Array-Checks und Modulo-Operationen. Dies betraf:
+- Die Bias-Berechnung in `calculateBias()`
+- Die Special Number Bonus Berechnung in `getSpecialNumberBonus()`
+- Die Cooldown-Reduktion in `getCooldownReduction()`
+- Das Grid-Update in `updateGrid()`
+- Die Tooltip-Anzeige in `showTooltip()`
+
+### Visuelle Implementierung
+Die speziellen Zahlen werden im Grid durch verschiedene Indikatoren dargestellt:
+- **Primzahlen**: Stern (★) in der oberen rechten Ecke
+- **Fibonacci-Zahlen**: Diamant (◆) in der unteren linken Ecke
+- **Durch 5 teilbare Zahlen**: Goldener innerer Schatten-Rahmen
 
 ### Technische Erkenntnisse
+1. **Code-Organisation**: Die Utility-Funktionen wurden logisch bei den anderen Utility-Funktionen platziert, um die Code-Struktur konsistent zu halten.
 
-1. **CSS Grid Layout**: 
-   - Verwendet `display: grid` mit `grid-template-columns: repeat(10, 1fr)`
-   - `aspect-ratio: 1` für quadratische Zellen
-   - Responsive mit `gap` Anpassungen für mobile Geräte
+2. **Performance**: Die Verwendung von `includes()` für die Array-Checks ist für Arrays dieser Größe (25 Primzahlen, 11 Fibonacci-Zahlen) ausreichend performant.
 
-2. **Special Number Indicators**:
-   - Primzahlen: ★ Symbol mit `::before` Pseudo-Element
-   - Fibonacci-Zahlen: ◆ Symbol mit `::after` Pseudo-Element
-   - Durch 5 teilbare Zahlen: Gelber Rahmen mit `box-shadow: inset`
+3. **CSS-Positioning**: Die Verwendung von `::before` und `::after` Pseudo-Elementen für die Indikatoren ermöglicht eine saubere Trennung von Inhalt und Styling.
 
-3. **Tooltip System**:
-   - Custom Tooltip-Element statt Browser-Standard `title` Attribute
-   - Event-basiert mit `mouseover`, `mouseout`, und `mousemove`
-   - 300ms Verzögerung um Tooltip-Spam zu vermeiden
-   - Intelligente Positionierung die Viewport-Grenzen berücksichtigt
+4. **Dark Mode Kompatibilität**: Die speziellen Indikatoren nutzen `opacity` anstatt fester Farben, wodurch sie sowohl im Light- als auch im Dark-Mode gut sichtbar sind.
 
-4. **Performance-Optimierungen**:
-   - Grid wird nur einmal beim Start erstellt
-   - Nur CSS-Klassen werden bei Updates geändert
-   - Tooltip-Content wird dynamisch generiert nur bei Bedarf
-
-### Dark Mode Integration
-- Alle Farben verwenden CSS Custom Properties
-- Automatische Anpassung mit `@media (prefers-color-scheme: dark)`
-- Level-Farben wurden für Dark Mode optimiert (z.B. dunkleres Grau für Level 0)
-
-### Architektur-Entscheidungen
-
-1. **Keine Framework-Abhängigkeiten**: Vanilla JavaScript für maximale Performance
-2. **Event Delegation**: Tooltip-Events auf document-Level für bessere Performance
-3. **Separation of Concerns**: UI-Update-Logik klar getrennt von Game-State-Logik
-
-### Debugging-Erfahrungen
-- Browser DevTools zeigen korrekte Grid-Struktur
-- Alle 100 Zellen werden korrekt generiert
-- Tooltip-Element ist im DOM vorhanden
-- Keine JavaScript-Fehler in der Console
-
-### Best Practices
-1. Immer `removeAttribute('title')` verwenden wenn custom Tooltips implementiert werden
-2. CSS-Klassen für Zustände verwenden statt inline styles
-3. Tooltips sollten `pointer-events: none` haben um Interferenz zu vermeiden
+### Mögliche zukünftige Verbesserungen
+1. Die Primzahlen könnten algorithmisch berechnet werden statt hardcoded zu sein
+2. Weitere spezielle Zahlentypen könnten hinzugefügt werden (z.B. Quadratzahlen, Dreieckszahlen)
+3. Die visuellen Indikatoren könnten animiert werden beim Hover oder beim Erreichen eines neuen Levels

@@ -151,10 +151,10 @@ function calculateBias() {
       }
       
       // Apply special number multipliers
-      if (PRIME_NUMBERS.includes(i)) {
+      if (isPrime(i)) {
         levelBonus *= 1.5;
       }
-      if (FIBONACCI_NUMBERS.includes(i)) {
+      if (isFibonacci(i)) {
         levelBonus *= 1.2;
       }
       
@@ -276,6 +276,19 @@ function calculateLevelProgress(count) {
   };
 }
 
+// Utility functions for special numbers
+function isPrime(num) {
+  return PRIME_NUMBERS.includes(num);
+}
+
+function isFibonacci(num) {
+  return FIBONACCI_NUMBERS.includes(num);
+}
+
+function isDivisibleBy5(num) {
+  return num % 5 === 0;
+}
+
 // Additional utility functions
 function getCollectedNumbers() {
   return Object.keys(gameState.numbers)
@@ -292,10 +305,10 @@ function getLeveledNumbers(minLevel = 1) {
 function getSpecialNumberBonus(num) {
   let bonus = 1.0;
   
-  if (PRIME_NUMBERS.includes(num)) {
+  if (isPrime(num)) {
     bonus *= 1.5;
   }
-  if (FIBONACCI_NUMBERS.includes(num)) {
+  if (isFibonacci(num)) {
     bonus *= 1.2;
   }
   
@@ -306,7 +319,7 @@ function getCooldownReduction() {
   let reduction = 0;
   
   // Divisible by 5 bonus (only level 1+ numbers)
-  const divisibleBy5 = getLeveledNumbers(1).filter(n => n % 5 === 0);
+  const divisibleBy5 = getLeveledNumbers(1).filter(n => isDivisibleBy5(n));
   reduction += divisibleBy5.length * 2; // 2% per number
   
   // Level sum bonus
@@ -374,9 +387,9 @@ function updateGrid() {
       cell.id = `number-${i}`;
       
       // Add special number classes
-      if (PRIME_NUMBERS.includes(i)) cell.classList.add('prime');
-      if (FIBONACCI_NUMBERS.includes(i)) cell.classList.add('fibonacci');
-      if (i % 5 === 0) cell.classList.add('divisible-by-5');
+      if (isPrime(i)) cell.classList.add('prime');
+      if (isFibonacci(i)) cell.classList.add('fibonacci');
+      if (isDivisibleBy5(i)) cell.classList.add('divisible-by-5');
       
       grid.appendChild(cell);
     }
@@ -491,13 +504,13 @@ function showTooltip(number, x, y) {
   
   // Special properties
   const specialProps = [];
-  if (PRIME_NUMBERS.includes(number)) {
+  if (isPrime(number)) {
     specialProps.push('<div class="tooltip-special-item">★ Prime Number (1.5x bias multiplier)</div>');
   }
-  if (FIBONACCI_NUMBERS.includes(number)) {
+  if (isFibonacci(number)) {
     specialProps.push('<div class="tooltip-special-item">◆ Fibonacci Number (1.2x bias multiplier)</div>');
   }
-  if (number % 5 === 0) {
+  if (isDivisibleBy5(number)) {
     if (numberData.level >= 1) {
       specialProps.push('<div class="tooltip-special-item">÷5 Divisible by 5 (-2% cooldown)</div>');
     } else {
