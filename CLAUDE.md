@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a browser-based "Number Collection Game" where players collect and level up numbers from 1-100 through dice rolls. The game is designed to run entirely in the browser using vanilla web technologies.
+This is a browser-based "Number Collection Game" where players collect and level up numbers from 1-100 through dice rolls. The game runs entirely in the browser using vanilla web technologies with no external dependencies.
 
 ## Technology Stack
 
@@ -46,10 +46,18 @@ gameState = {
 
 ### Core Game Mechanics
 
-1. **Number Collection**: Players roll dice (1-100) to collect numbers
-2. **Leveling System**: Numbers level up with repeated rolls (10x, 25x, 50x, 100x)
-3. **Bias System**: Higher level numbers increase chances of rolling missing numbers
-4. **Dual Cooldown System**: Manual rolls (3s base) and automatic rolls (8s base, unlocked at 10 numbers)
+1. **Number Collection**: Roll dice (1-100) to collect numbers
+2. **Leveling System**: 
+   - 1x = Collected (White)
+   - 10x = Level 1 (Green) - +0.8% bias
+   - 25x = Level 2 (Blue) - +2.0% bias
+   - 50x = Level 3 (Purple) - +4.5% bias
+   - 100x = Level 4 (Orange) - +8.0% bias
+3. **Bias System**: Higher level numbers increase chances of rolling missing numbers (soft-cap at 85%)
+4. **Dual Cooldown System**: 
+   - Manual rolls: 3s base cooldown
+   - Auto rolls: 8s base cooldown (unlocked at 10 collected numbers)
+   - Both run in parallel
 
 ### Key Functions to Implement
 
@@ -65,6 +73,7 @@ gameState = {
 - **10x10 Grid**: Visual representation of all 100 numbers with color-coded levels
 - **Roll Interface**: Manual roll button and auto-roll status indicator
 - **Statistics Display**: Current bias, collected count, and progress tracking
+- **Hover Information**: Shows roll count, progress to next level, and special properties
 
 ### Special Number Properties
 
@@ -72,9 +81,49 @@ gameState = {
 - **Prime Numbers**: 1.5x multiplier on bias calculation
 - **Fibonacci Numbers**: 1.2x multiplier on bias calculation
 
+### Bias Calculation System
+
+```
+Bias-Stärke = Σ(Level-Boni) + Spezial-Boni + Milestone-Multiplier
+```
+
+Target selection:
+- Bias chance: Roll from missing numbers pool
+- Remaining chance: Completely random (1-100)
+- High bias (>50%): Additional "Near-Missing" pool (±3 around missing numbers)
+
+### Cooldown Reduction Formula
+
+```
+Gesamtreduktion = (Durch-5-teilbar × 5%) + (Level-Summe × 1%) + Prestige-Boni
+Maximum: 85% Reduktion
+```
+
 ## Performance Considerations
 
 - Grid updates should only occur when state changes
 - Cooldown timers run at 100ms intervals
 - LocalStorage saves should be debounced to avoid excessive writes
 - DOM manipulation should be batched where possible
+
+## Testing with Puppeteer MCP
+
+When implementing new features, always test them using the Puppeteer MCP tool to ensure:
+- No JavaScript console errors occur
+- All functionality works correctly as expected
+- UI elements render and behave properly
+
+**Game URL for testing**: `http://localhost:63342/number-gather/index.html`
+
+Use the following Puppeteer MCP commands to verify:
+1. Navigate to the game URL
+2. Take screenshots before and after feature implementation
+3. Check for console errors using `puppeteer_evaluate`
+4. Test user interactions (clicks, form fills) to ensure proper functionality
+
+## Game Progression Phases
+
+- **Early Game (0-30 numbers)**: Low bias, almost all rolls are new numbers
+- **Mid Game (30-70 numbers)**: Auto-roll unlocked, special number bonuses become important
+- **End Game (70-100 numbers)**: High bias needed for last numbers, strategic leveling critical
+- **Completion (100/100)**: Focus on maximum leveling and achievement hunting
