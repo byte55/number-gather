@@ -10,8 +10,12 @@ let gameState = {
   stats: {
     totalRolls: 0,
     collectedCount: 0,
-    currentStreak: 0
-  }
+    currentStreak: 0,
+    bestStreak: 0,
+    startTime: Date.now(),
+    totalPlayTime: 0
+  },
+  achievements: {}
 };
 
 // Constants
@@ -22,6 +26,80 @@ const UNLOCK_AUTO_THRESHOLD = 10; // Unlock auto-roll at 10 collected numbers
 // Special number arrays
 const PRIME_NUMBERS = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97];
 const FIBONACCI_NUMBERS = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
+
+// Achievement definitions
+const ACHIEVEMENTS = {
+  first10: { 
+    id: 'first10',
+    name: 'First Steps', 
+    description: 'Collect your first 10 numbers',
+    icon: '🎯',
+    check: () => gameState.stats.collectedCount >= 10
+  },
+  halfway: { 
+    id: 'halfway',
+    name: 'Halfway There', 
+    description: 'Collect 50 numbers',
+    icon: '🌟',
+    check: () => gameState.stats.collectedCount >= 50
+  },
+  completionist: { 
+    id: 'completionist',
+    name: 'Completionist', 
+    description: 'Collect all 100 numbers',
+    icon: '👑',
+    check: () => gameState.stats.collectedCount >= 100
+  },
+  speedRunner: { 
+    id: 'speedRunner',
+    name: 'Speed Runner', 
+    description: 'Collect 100 numbers in under 10 minutes',
+    icon: '⚡',
+    check: () => gameState.stats.collectedCount >= 100 && (Date.now() - gameState.stats.startTime) < 600000
+  },
+  luckyStreak: { 
+    id: 'luckyStreak',
+    name: 'Lucky Streak', 
+    description: 'Get 10 new numbers in a row',
+    icon: '🍀',
+    check: () => gameState.stats.bestStreak >= 10
+  },
+  primeMaster: { 
+    id: 'primeMaster',
+    name: 'Prime Master', 
+    description: 'Collect all prime numbers',
+    icon: '🔢',
+    check: () => PRIME_NUMBERS.every(n => gameState.numbers[n].count > 0)
+  },
+  fibonacciMaster: { 
+    id: 'fibonacciMaster',
+    name: 'Fibonacci Master', 
+    description: 'Collect all Fibonacci numbers',
+    icon: '🌀',
+    check: () => FIBONACCI_NUMBERS.every(n => gameState.numbers[n].count > 0)
+  },
+  levelMaster: { 
+    id: 'levelMaster',
+    name: 'Level Master', 
+    description: 'Get any number to level 4',
+    icon: '🔥',
+    check: () => Object.values(gameState.numbers).some(n => n.level >= 4)
+  },
+  biasBuilder: { 
+    id: 'biasBuilder',
+    name: 'Bias Builder', 
+    description: 'Reach 50% bias',
+    icon: '📈',
+    check: () => calculateBias() >= 50
+  },
+  persistent: { 
+    id: 'persistent',
+    name: 'Persistent Player', 
+    description: 'Roll the dice 1000 times',
+    icon: '🎲',
+    check: () => gameState.stats.totalRolls >= 1000
+  }
+};
 
 // Initialize game
 function initGame() {
@@ -68,6 +146,26 @@ function setupEventListeners() {
   document.getElementById('manual-roll').addEventListener('click', performManualRoll);
   document.getElementById('auto-roll').addEventListener('click', toggleAutoRoll);
   
+  // Menu buttons
+  document.getElementById('new-game-btn').addEventListener('click', showNewGameModal);
+  document.getElementById('import-btn').addEventListener('click', showImportModal);
+  document.getElementById('export-btn').addEventListener('click', showExportModal);
+  document.getElementById('achievements-btn').addEventListener('click', showAchievementsModal);
+  document.getElementById('stats-btn').addEventListener('click', showStatisticsModal);
+  
+  // Modal buttons
+  document.getElementById('confirm-new-game').addEventListener('click', confirmNewGame);
+  document.getElementById('cancel-new-game').addEventListener('click', hideModals);
+  document.getElementById('confirm-import').addEventListener('click', confirmImport);
+  document.getElementById('cancel-import').addEventListener('click', hideModals);
+  document.getElementById('copy-export').addEventListener('click', copyExportData);
+  document.getElementById('close-export').addEventListener('click', hideModals);
+  document.getElementById('close-achievements').addEventListener('click', hideModals);
+  document.getElementById('close-statistics').addEventListener('click', hideModals);
+  
+  // Modal overlay click to close
+  document.getElementById('modal-overlay').addEventListener('click', hideModals);
+  
   // Keyboard shortcuts
   document.addEventListener('keydown', handleKeyPress);
   
@@ -76,6 +174,9 @@ function setupEventListeners() {
   
   // Save state when page is about to unload
   window.addEventListener('beforeunload', () => {
+    // Update total play time
+    gameState.stats.totalPlayTime += Date.now() - gameState.stats.startTime;
+    
     // Force immediate save on page unload
     if (saveTimeout) {
       clearTimeout(saveTimeout);
@@ -311,6 +412,11 @@ function processRollResult(number) {
     gameState.stats.collectedCount++;
     gameState.stats.currentStreak++;
     
+    // Update best streak
+    if (gameState.stats.currentStreak > gameState.stats.bestStreak) {
+      gameState.stats.bestStreak = gameState.stats.currentStreak;
+    }
+    
     // Check for milestones
     checkMilestones(oldCollectedCount, gameState.stats.collectedCount);
     
@@ -322,6 +428,9 @@ function processRollResult(number) {
     // Reset streak if not a new number
     gameState.stats.currentStreak = 0;
   }
+  
+  // Check achievements after every roll
+  checkAchievements();
   
   // Update roll result display
   displayRollResult(number, wasNew, leveledUp);
@@ -1027,6 +1136,12 @@ function loadGameState() {
         };
         gameState.stats = { ...gameState.stats, ...(loaded.stats || {}) };
         
+        // Ensure new properties exist for backward compatibility
+        gameState.stats.bestStreak = gameState.stats.bestStreak || 0;
+        gameState.stats.startTime = gameState.stats.startTime || Date.now();
+        gameState.stats.totalPlayTime = gameState.stats.totalPlayTime || 0;
+        gameState.achievements = loaded.achievements || {};
+        
         // Reset active cooldowns to prevent stuck states
         gameState.cooldowns.manual.active = false;
         gameState.cooldowns.manual.remaining = 0;
@@ -1056,8 +1171,12 @@ function initializeGameState() {
     stats: {
       totalRolls: 0,
       collectedCount: 0,
-      currentStreak: 0
-    }
+      currentStreak: 0,
+      bestStreak: 0,
+      startTime: Date.now(),
+      totalPlayTime: 0
+    },
+    achievements: {}
   };
   
   // Initialize all numbers 1-100
@@ -1067,6 +1186,335 @@ function initializeGameState() {
   
   console.log('Game state initialized (fresh start)');
 }
+
+// Modal Functions
+function showModal(modalId) {
+  document.getElementById('modal-overlay').classList.add('active');
+  document.getElementById(modalId).classList.add('active');
+}
+
+function hideModals() {
+  document.getElementById('modal-overlay').classList.remove('active');
+  document.querySelectorAll('.modal').forEach(modal => {
+    modal.classList.remove('active');
+  });
+}
+
+function showNewGameModal() {
+  showModal('new-game-modal');
+}
+
+function confirmNewGame() {
+  // Reset game state
+  initializeGameState();
+  gameState.stats.startTime = Date.now();
+  
+  // Clear achievements
+  gameState.achievements = {};
+  
+  // Update UI and save
+  updateUI();
+  saveGameState();
+  
+  hideModals();
+  
+  // Show notification
+  displayNotification('New game started!', 'success');
+}
+
+function showImportModal() {
+  document.getElementById('import-data').value = '';
+  showModal('import-modal');
+}
+
+function confirmImport() {
+  const importData = document.getElementById('import-data').value.trim();
+  
+  try {
+    const imported = JSON.parse(importData);
+    
+    // Validate imported data
+    if (!imported.numbers || !imported.stats) {
+      throw new Error('Invalid save data format');
+    }
+    
+    // Apply imported state
+    gameState = imported;
+    
+    // Ensure all required properties exist
+    gameState.stats.bestStreak = gameState.stats.bestStreak || 0;
+    gameState.stats.startTime = gameState.stats.startTime || Date.now();
+    gameState.stats.totalPlayTime = gameState.stats.totalPlayTime || 0;
+    gameState.achievements = gameState.achievements || {};
+    
+    // Reset cooldowns
+    gameState.cooldowns.manual.active = false;
+    gameState.cooldowns.manual.remaining = 0;
+    gameState.cooldowns.auto.active = false;
+    gameState.cooldowns.auto.remaining = 0;
+    
+    updateUI();
+    saveGameState();
+    hideModals();
+    
+    displayNotification('Game imported successfully!', 'success');
+  } catch (error) {
+    displayNotification('Invalid save data!', 'error');
+  }
+}
+
+function showExportModal() {
+  const exportData = JSON.stringify(gameState, null, 2);
+  document.getElementById('export-data').value = exportData;
+  showModal('export-modal');
+}
+
+function copyExportData() {
+  const exportTextarea = document.getElementById('export-data');
+  exportTextarea.select();
+  document.execCommand('copy');
+  
+  displayNotification('Copied to clipboard!', 'success');
+}
+
+function showAchievementsModal() {
+  const achievementsList = document.getElementById('achievements-list');
+  achievementsList.innerHTML = '';
+  
+  Object.values(ACHIEVEMENTS).forEach(achievement => {
+    const unlocked = gameState.achievements[achievement.id];
+    const item = document.createElement('div');
+    item.className = `achievement-item ${unlocked ? 'unlocked' : ''}`;
+    
+    item.innerHTML = `
+      <div class="achievement-icon">${achievement.icon}</div>
+      <div class="achievement-info">
+        <div class="achievement-name">${achievement.name}</div>
+        <div class="achievement-description">${achievement.description}</div>
+        ${unlocked ? `<div class="achievement-date">Unlocked: ${new Date(unlocked).toLocaleDateString()}</div>` : ''}
+      </div>
+    `;
+    
+    achievementsList.appendChild(item);
+  });
+  
+  showModal('achievements-modal');
+}
+
+function showStatisticsModal() {
+  const totalPlayTime = gameState.stats.totalPlayTime + (Date.now() - gameState.stats.startTime);
+  const playTimeMinutes = Math.floor(totalPlayTime / 60000);
+  const playTimeSeconds = Math.floor((totalPlayTime % 60000) / 1000);
+  
+  const collectedNumbers = getCollectedNumbers();
+  const leveledNumbers = getLeveledNumbers();
+  const missingNumbers = getMissingNumbers();
+  
+  const statsContent = document.getElementById('statistics-content');
+  statsContent.innerHTML = `
+    <div class="stat-section">
+      <h3>General Statistics</h3>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <span class="stat-item-label">Total Rolls:</span>
+          <span class="stat-item-value">${gameState.stats.totalRolls}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Numbers Collected:</span>
+          <span class="stat-item-value">${gameState.stats.collectedCount}/100</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Current Streak:</span>
+          <span class="stat-item-value">${gameState.stats.currentStreak}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Best Streak:</span>
+          <span class="stat-item-value">${gameState.stats.bestStreak}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Play Time:</span>
+          <span class="stat-item-value">${playTimeMinutes}m ${playTimeSeconds}s</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Current Bias:</span>
+          <span class="stat-item-value">${calculateBias().toFixed(1)}%</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="stat-section">
+      <h3>Level Distribution</h3>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <span class="stat-item-label">Level 0 (Not collected):</span>
+          <span class="stat-item-value">${100 - collectedNumbers.length}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Level 1+ Numbers:</span>
+          <span class="stat-item-value">${getLeveledNumbers(1).length}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Level 2+ Numbers:</span>
+          <span class="stat-item-value">${getLeveledNumbers(2).length}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Level 3+ Numbers:</span>
+          <span class="stat-item-value">${getLeveledNumbers(3).length}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Level 4 Numbers:</span>
+          <span class="stat-item-value">${getLeveledNumbers(4).length}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="stat-section">
+      <h3>Special Numbers</h3>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <span class="stat-item-label">Prime Numbers Collected:</span>
+          <span class="stat-item-value">${PRIME_NUMBERS.filter(n => gameState.numbers[n].count > 0).length}/${PRIME_NUMBERS.length}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Fibonacci Numbers Collected:</span>
+          <span class="stat-item-value">${FIBONACCI_NUMBERS.filter(n => gameState.numbers[n].count > 0).length}/${FIBONACCI_NUMBERS.length}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Divisible by 5 Collected:</span>
+          <span class="stat-item-value">${collectedNumbers.filter(n => isDivisibleBy5(n)).length}/20</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="stat-section">
+      <h3>Efficiency</h3>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <span class="stat-item-label">Rolls per Number:</span>
+          <span class="stat-item-value">${gameState.stats.collectedCount > 0 ? (gameState.stats.totalRolls / gameState.stats.collectedCount).toFixed(1) : '0'}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Collection Rate:</span>
+          <span class="stat-item-value">${gameState.stats.totalRolls > 0 ? ((gameState.stats.collectedCount / gameState.stats.totalRolls) * 100).toFixed(1) : '0'}%</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item-label">Cooldown Reduction:</span>
+          <span class="stat-item-value">${getCooldownReduction().toFixed(1)}%</span>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  showModal('statistics-modal');
+}
+
+// Notification System
+function displayNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.textContent = message;
+  
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    background: ${type === 'success' ? 'var(--level-1)' : type === 'error' ? '#dc3545' : 'var(--button-primary)'};
+    color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 2000;
+    animation: slideIn 0.3s ease;
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease forwards';
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
+
+// Achievement Checking
+function checkAchievements() {
+  Object.values(ACHIEVEMENTS).forEach(achievement => {
+    if (!gameState.achievements[achievement.id] && achievement.check()) {
+      // Unlock achievement
+      gameState.achievements[achievement.id] = Date.now();
+      
+      // Show achievement notification
+      displayAchievementNotification(achievement);
+      
+      // Save state
+      saveGameState();
+    }
+  });
+}
+
+function displayAchievementNotification(achievement) {
+  const notification = document.createElement('div');
+  notification.className = 'achievement-notification';
+  
+  notification.innerHTML = `
+    <div class="achievement-notification-icon">${achievement.icon}</div>
+    <div class="achievement-notification-content">
+      <div class="achievement-notification-title">Achievement Unlocked!</div>
+      <div class="achievement-notification-name">${achievement.name}</div>
+    </div>
+  `;
+  
+  notification.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, var(--level-3), var(--level-4));
+    color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 2000;
+    animation: achievementSlideIn 0.5s ease;
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'achievementSlideOut 0.5s ease forwards';
+    setTimeout(() => notification.remove(), 500);
+  }, 4000);
+}
+
+// Add achievement animations to CSS
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+  
+  @keyframes achievementSlideIn {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  @keyframes achievementSlideOut {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(100%); opacity: 0; }
+  }
+  
+  .achievement-notification-icon { font-size: 2rem; }
+  .achievement-notification-title { font-size: 0.9rem; opacity: 0.8; }
+  .achievement-notification-name { font-size: 1.1rem; font-weight: bold; }
+`;
+document.head.appendChild(style);
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', initGame);

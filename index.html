@@ -10,6 +10,13 @@
     <div class="game-container">
         <header class="game-header">
             <h1>Number Collection Game</h1>
+            <div class="menu-container">
+                <button class="menu-button" id="new-game-btn" title="New Game">🔄</button>
+                <button class="menu-button" id="import-btn" title="Import Save">📥</button>
+                <button class="menu-button" id="export-btn" title="Export Save">📤</button>
+                <button class="menu-button" id="achievements-btn" title="Achievements">🏆</button>
+                <button class="menu-button" id="stats-btn" title="Statistics">📊</button>
+            </div>
             <div class="stats-container">
                 <div class="stat">
                     <span class="stat-label">Collected:</span>
@@ -65,6 +72,73 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" id="modal-overlay"></div>
+
+    <!-- New Game Confirmation Modal -->
+    <div class="modal" id="new-game-modal">
+        <div class="modal-content">
+            <h2>Start New Game?</h2>
+            <p>This will reset all your progress. Are you sure?</p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="cancel-new-game">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="confirm-new-game">New Game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal" id="import-modal">
+        <div class="modal-content">
+            <h2>Import Save</h2>
+            <p>Paste your save data below:</p>
+            <textarea class="import-textarea" id="import-data" placeholder="Paste save data here..."></textarea>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="cancel-import">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="confirm-import">Import</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="export-modal">
+        <div class="modal-content">
+            <h2>Export Save</h2>
+            <p>Copy your save data below:</p>
+            <textarea class="export-textarea" id="export-data" readonly></textarea>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-confirm" id="copy-export">Copy to Clipboard</button>
+                <button class="modal-btn modal-btn-cancel" id="close-export">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements Modal -->
+    <div class="modal modal-large" id="achievements-modal">
+        <div class="modal-content">
+            <h2>Achievements</h2>
+            <div class="achievements-list" id="achievements-list">
+                <!-- Achievements will be populated by JavaScript -->
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="close-achievements">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Modal -->
+    <div class="modal modal-large" id="statistics-modal">
+        <div class="modal-content">
+            <h2>Statistics</h2>
+            <div class="statistics-content" id="statistics-content">
+                <!-- Statistics will be populated by JavaScript -->
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="close-statistics">Close</button>
+            </div>
+        </div>
     </div>
 
     <script src="src/js/game.js"></script>

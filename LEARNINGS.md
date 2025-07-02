@@ -608,3 +608,147 @@ Alle Tests wurden erfolgreich durchgeführt:
    - Größere Storage-Limits
    - Asynchrone API
    - Bessere Performance bei großen Datenmengen
+
+## Phase 11: Erweiterte Features (Optional)
+
+### Implementierte Features
+
+1. **Reset/New Game Button**
+   - Konfirmations-Dialog zur Sicherheit
+   - Vollständiges Reset des Spielstands
+   - Behält die Struktur des gameState bei
+   - Notification-Feedback nach Reset
+
+2. **Import/Export System**
+   - Export als JSON mit Pretty-Print (2 Spaces)
+   - Copy-to-Clipboard Funktionalität
+   - Import mit Validierung der Datenstruktur
+   - Fehlerbehandlung für ungültige Daten
+   - Rückwärtskompatibilität für alte Saves
+
+3. **Achievement System**
+   - 10 verschiedene Achievements mit Icons
+   - Automatische Überprüfung nach jedem Wurf
+   - Achievement-Notifications mit Animation
+   - Unlock-Datum wird gespeichert
+   - Visuelle Unterscheidung (unlocked/locked)
+
+4. **Statistics Display**
+   - Umfassende Statistik-Ansicht in 4 Kategorien
+   - General Statistics (Rolls, Streak, Play Time)
+   - Level Distribution (Anzahl pro Level)
+   - Special Numbers (Primes, Fibonacci, Div5)
+   - Efficiency Metrics (Rolls per Number, Collection Rate)
+
+### Technische Implementierung
+
+1. **Modal System**
+   - Zentrales Modal-Overlay für alle Dialoge
+   - Animations (fadeIn, slideIn) für smooth UX
+   - Click-to-Close auf Overlay
+   - Responsive Design für Mobile
+
+2. **Menu Integration**
+   - Icon-basierte Menu-Buttons im Header
+   - Tooltips für bessere UX
+   - Konsistentes Styling mit Theme-Variablen
+
+3. **State Management**
+   - Erweiterte Stats (bestStreak, startTime, totalPlayTime)
+   - Achievements als separates Object im State
+   - Backward Compatibility für existierende Saves
+
+4. **Achievement Definitionen**
+   ```javascript
+   const ACHIEVEMENTS = {
+     first10: { check: () => gameState.stats.collectedCount >= 10 },
+     speedRunner: { check: () => gameState.stats.collectedCount >= 100 && 
+                              (Date.now() - gameState.stats.startTime) < 600000 }
+     // ... weitere Achievements
+   }
+   ```
+
+### UI/UX Verbesserungen
+
+1. **Notification System**
+   - Allgemeines Notification-System für Feedback
+   - Verschiedene Types (success, error, info)
+   - Auto-dismiss nach 3 Sekunden
+   - Slide-in/out Animationen
+
+2. **Achievement Notifications**
+   - Spezielle Notification für Achievements
+   - Bottom-right Position für Unterscheidung
+   - Längere Display-Zeit (4 Sekunden)
+   - Gradient-Background für Aufmerksamkeit
+
+3. **Modal Animations**
+   - Scale-Transform für Modal-Erscheinen
+   - Fade-in für Overlay
+   - Smooth transitions überall
+
+### Performance Considerations
+
+1. **Achievement Checking**
+   - Nur nach relevanten Events (Roll)
+   - Early Exit wenn bereits unlocked
+   - Effiziente Check-Funktionen
+
+2. **Modal Rendering**
+   - Content wird nur bei Öffnung generiert
+   - innerHTML für Performance bei Listen
+   - Event Delegation wo möglich
+
+3. **Statistics Calculation**
+   - Werte werden on-demand berechnet
+   - Keine permanente Tracking von abgeleiteten Werten
+   - Effiziente Array-Filter Operationen
+
+### Herausforderungen und Lösungen
+
+1. **Backward Compatibility**
+   - Problem: Alte Saves haben neue Properties nicht
+   - Lösung: Default-Werte in loadGameState()
+   - Defensive Programming mit || Operators
+
+2. **Modal Z-Index Management**
+   - Problem: Überlappende UI-Elemente
+   - Lösung: Klare Z-Index Hierarchie (999 für Overlay, 1000 für Modal, 2000 für Notifications)
+
+3. **Copy to Clipboard**
+   - Problem: Moderne Clipboard API nicht überall verfügbar
+   - Lösung: Fallback auf document.execCommand('copy')
+   - User-Feedback über Notification
+
+### Testing mit Puppeteer
+
+- Alle Features wurden erfolgreich getestet
+- Modals öffnen und schließen korrekt
+- Export/Import funktioniert fehlerfrei
+- Achievements werden korrekt angezeigt
+- Statistics zeigen akkurate Daten
+
+### Mögliche Erweiterungen
+
+1. **Achievement Progress**
+   - Progress-Bars für teilweise erfüllte Achievements
+   - "Almost there" Notifications bei 80% Progress
+
+2. **Statistics Charts**
+   - Visuelle Darstellung mit Canvas/SVG
+   - Roll-History als Graph
+   - Level-Distribution als Pie Chart
+
+3. **Cloud Save**
+   - Integration mit Cloud-Services
+   - Automatische Backups
+   - Cross-Device Sync
+
+4. **Custom Themes**
+   - Theme-Selector im Menu
+   - Custom Color Schemes
+   - Speicherung der Theme-Präferenz
+
+### Fazit
+
+Phase 11 erweitert das Spiel um wichtige Quality-of-Life Features, die das Spielerlebnis deutlich verbessern. Das Achievement-System sorgt für zusätzliche Motivation, während Import/Export die Datensicherheit gewährleistet. Die Statistics geben tiefe Einblicke in den Spielfortschritt. Alle Features wurden mit Fokus auf Performance und User Experience implementiert.
