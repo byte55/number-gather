@@ -12,29 +12,39 @@ This is a browser-based "Number Collection Game" where players collect and level
 - **Storage**: Browser LocalStorage for game state persistence
 - **Build Tools**: None required - pure client-side implementation
 - **Dependencies**: None - completely self-contained
+- **Balance Testing**: Node.js simulation scripts for headless game analysis
 
 ## Project Structure
 
 ```
 /
 ├── index.html          # Main HTML file (stays in root for GitHub Pages)
+├── simulate-balance.js # Headless game simulation for balance testing
+├── rebalance.md       # Balance analysis and rebalancing plan
 ├── src/
 │   ├── css/
 │   │   └── styles.css  # Main stylesheet with theme support
 │   └── js/
-│       └── game.js     # Main game logic
+│       └── game.js     # Main game logic (~1650 lines)
 ├── CLAUDE.md          # Project guidance for Claude
 ├── GAME.md            # Game documentation
+├── LEARNINGS.md       # Technical knowledge base
 └── TODO.md            # Task tracking
 ```
 
 ## Development Commands
 
-Since this is a vanilla JavaScript project, there are no build, test, or lint commands. Development workflow:
-
+### Game Development
 1. **Running the game**: Open `index.html` directly in a web browser
 2. **Testing changes**: Refresh the browser (F5 or Cmd+R)
 3. **Debugging**: Use browser developer tools (F12)
+
+### Balance Testing
+- `npm run balance` - Run 5 simulations at 1000x speed (standard analysis)
+- `npm run balance:quick` - Run 3 simulations at 2000x speed (quick check)
+- `npm run balance:detailed` - Run 10 simulations at 500x speed (detailed analysis)
+
+The balance simulation runs headless game sessions using pure game logic and outputs statistical analysis including bias progression, cooldown reduction effectiveness, and endgame difficulty assessment.
 
 ## GitHub Actions and Development Notes
 
@@ -126,9 +136,11 @@ Target selection:
 ### Cooldown Reduction Formula
 
 ```
-Gesamtreduktion = (Durch-5-teilbar × 5%) + (Level-Summe × 1%) + Prestige-Boni
+Gesamtreduktion = (Durch-5-teilbar × 2%) + (Level-Summe × 1%) + Prestige-Boni
 Maximum: 85% Reduktion
 ```
+
+**Known Balance Issues**: Current endgame (90%+ completion) has insufficient bias and cooldown reduction. At 93% completion, players typically have only ~1-5% bias instead of the needed ~70% for reasonable progression. See `rebalance.md` for detailed analysis and proposed fixes.
 
 ## Performance Considerations
 
@@ -137,17 +149,25 @@ Maximum: 85% Reduktion
 - LocalStorage saves should be debounced to avoid excessive writes
 - DOM manipulation should be batched where possible
 
-## Testing with Puppeteer MCP
+## Testing Strategy
 
-When implementing new features, always test them using the Puppeteer MCP tool to ensure:
+### Balance Testing
+Always run balance simulations after changing game mechanics:
+1. `npm run balance:quick` - Quick verification of changes
+2. `npm run balance:detailed` - Comprehensive analysis for major changes
+3. Review generated `balance-results.json` for detailed metrics
+
+### Browser Testing with Puppeteer MCP
+When implementing new features, test using the Puppeteer MCP tool:
 - No JavaScript console errors occur
 - All functionality works correctly as expected
 - UI elements render and behave properly
 
-**Game URL for testing**: `http://localhost:63342/number-gather/index.html`
-**Production URL**: `https://byte55.github.io/number-gather/`
+**Game URLs for testing**: 
+- Local: `http://localhost:63342/number-gather/index.html`
+- Production: `https://byte55.github.io/number-gather/`
 
-Use the following Puppeteer MCP commands to verify:
+Use Puppeteer MCP commands to verify:
 1. Navigate to the game URL
 2. Take screenshots before and after feature implementation
 3. Check for console errors using `puppeteer_evaluate`
