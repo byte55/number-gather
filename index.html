@@ -23,8 +23,20 @@
                     <span class="stat-label">Total Rolls:</span>
                     <span class="stat-value" id="total-rolls">0</span>
                 </div>
+                <div class="stat">
+                    <span class="stat-label">Streak:</span>
+                    <span class="stat-value" id="current-streak">0</span>
+                </div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                    <span class="progress-text" id="progress-text">0%</span>
+                </div>
             </div>
         </header>
+
+        <div class="milestone-notification" id="milestone-notification"></div>
 
         <main class="game-main">
             <div class="roll-result-container" id="roll-result-container">

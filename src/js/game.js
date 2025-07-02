@@ -240,6 +240,7 @@ function calculateBias() {
 function processRollResult(number) {
   const wasNew = gameState.numbers[number].count === 0;
   const oldLevel = gameState.numbers[number].level;
+  const oldCollectedCount = gameState.stats.collectedCount;
   
   // Use the updateNumber utility
   updateNumber(number, 1);
@@ -247,14 +248,21 @@ function processRollResult(number) {
   const newLevel = gameState.numbers[number].level;
   const leveledUp = newLevel > oldLevel;
   
-  // Update collected count if new
+  // Update collected count and streak if new
   if (wasNew) {
     gameState.stats.collectedCount++;
+    gameState.stats.currentStreak++;
+    
+    // Check for milestones
+    checkMilestones(oldCollectedCount, gameState.stats.collectedCount);
     
     // Unlock auto-roll if threshold reached
     if (gameState.stats.collectedCount >= UNLOCK_AUTO_THRESHOLD) {
       gameState.cooldowns.auto.unlocked = true;
     }
+  } else {
+    // Reset streak if not a new number
+    gameState.stats.currentStreak = 0;
   }
   
   // Update roll result display
@@ -398,6 +406,59 @@ function getSpecialNumberBonus(num) {
   return bonus;
 }
 
+// Check for milestone achievements
+function checkMilestones(oldCount, newCount) {
+  const milestones = [25, 50, 75, 100];
+  
+  milestones.forEach(milestone => {
+    if (oldCount < milestone && newCount >= milestone) {
+      displayMilestone(milestone);
+    }
+  });
+}
+
+// Display milestone notification
+function displayMilestone(milestone) {
+  const notification = document.getElementById('milestone-notification');
+  
+  // Create milestone content
+  let title = '';
+  let message = '';
+  
+  switch (milestone) {
+    case 25:
+      title = '25% Complete!';
+      message = 'Quarter of the way there! Keep rolling!';
+      break;
+    case 50:
+      title = '50% Complete!';
+      message = 'Halfway to victory! The bias is building...';
+      break;
+    case 75:
+      title = '75% Complete!';
+      message = 'Almost there! The final push begins!';
+      break;
+    case 100:
+      title = '100% Complete!';
+      message = 'Congratulations! All numbers collected!';
+      break;
+  }
+  
+  // Update notification content
+  notification.innerHTML = `
+    <div class="milestone-title">${title}</div>
+    <div class="milestone-message">${message}</div>
+  `;
+  
+  // Show notification
+  notification.classList.add('show');
+  
+  // Hide after 3 seconds
+  setTimeout(() => {
+    notification.classList.remove('show');
+  }, 3000);
+}
+
 function getCooldownReduction() {
   let reduction = 0;
   
@@ -459,9 +520,24 @@ function updateUI() {
 }
 
 function updateStats() {
+  updateStatistics();
+}
+
+// Comprehensive statistics update function
+function updateStatistics() {
+  // Update basic stats
   document.getElementById('collected-count').textContent = `${gameState.stats.collectedCount}/100`;
   document.getElementById('bias-value').textContent = `${calculateBias().toFixed(1)}%`;
   document.getElementById('total-rolls').textContent = gameState.stats.totalRolls;
+  document.getElementById('current-streak').textContent = gameState.stats.currentStreak;
+  
+  // Update progress bar
+  const progressPercentage = (gameState.stats.collectedCount / 100) * 100;
+  const progressFill = document.getElementById('progress-fill');
+  const progressText = document.getElementById('progress-text');
+  
+  progressFill.style.width = `${progressPercentage}%`;
+  progressText.textContent = `${Math.floor(progressPercentage)}%`;
   
   // Update cooldown reduction display
   const reduction = getCooldownReduction();
@@ -469,6 +545,13 @@ function updateStats() {
   if (cooldownElement) {
     cooldownElement.textContent = `${reduction.toFixed(1)}%`;
   }
+  
+  // Add animation class for stat changes
+  const statElements = document.querySelectorAll('.stat-value');
+  statElements.forEach(el => {
+    el.classList.add('stat-update');
+    setTimeout(() => el.classList.remove('stat-update'), 300);
+  });
 }
 
 function updateButtons() {
