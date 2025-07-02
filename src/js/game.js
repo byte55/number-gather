@@ -1,6 +1,21 @@
-// Number Collection Game - Main Game Logic
+/**
+ * Number Collection Game - Main Game Logic
+ * 
+ * A browser-based number collection game where players collect and level up 
+ * numbers from 1-100 through strategic dice rolling with an innovative bias system.
+ * 
+ * @author Byte55
+ * @version 1.0.0
+ */
 
-// Game State
+/**
+ * Global game state object containing all game data
+ * @type {Object}
+ * @property {Object} numbers - Number collection data (1-100)
+ * @property {Object} cooldowns - Manual and auto-roll cooldown states
+ * @property {Object} stats - Game statistics and progress tracking
+ * @property {Object} achievements - Achievement unlock status and dates
+ */
 let gameState = {
   numbers: {},
   cooldowns: {
@@ -18,16 +33,43 @@ let gameState = {
   achievements: {}
 };
 
-// Constants
-const COOLDOWN_MANUAL = 3000; // 3 seconds
-const COOLDOWN_AUTO = 8000; // 8 seconds
-const UNLOCK_AUTO_THRESHOLD = 10; // Unlock auto-roll at 10 collected numbers
+/**
+ * Game configuration constants
+ */
 
-// Special number arrays
+/** @constant {number} COOLDOWN_MANUAL - Manual roll cooldown in milliseconds (3 seconds) */
+const COOLDOWN_MANUAL = 3000;
+
+/** @constant {number} COOLDOWN_AUTO - Auto roll cooldown in milliseconds (8 seconds) */
+const COOLDOWN_AUTO = 8000;
+
+/** @constant {number} UNLOCK_AUTO_THRESHOLD - Number of collected numbers needed to unlock auto-roll */
+const UNLOCK_AUTO_THRESHOLD = 10;
+
+/**
+ * Special number arrays for game mechanics
+ */
+
+/** @constant {number[]} PRIME_NUMBERS - All prime numbers from 1-100 (provides 1.5x bias multiplier) */
 const PRIME_NUMBERS = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97];
+
+/** @constant {number[]} FIBONACCI_NUMBERS - Fibonacci numbers from 1-100 (provides 1.2x bias multiplier) */
 const FIBONACCI_NUMBERS = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
 
-// Achievement definitions
+/**
+ * Achievement definitions with unlock conditions and display information
+ * @constant {Object} ACHIEVEMENTS - Achievement configuration object
+ * @property {Object} first10 - First 10 numbers collected
+ * @property {Object} halfway - 50 numbers collected
+ * @property {Object} completionist - All 100 numbers collected
+ * @property {Object} speedRunner - Complete game in under 10 minutes
+ * @property {Object} luckyStreak - 10 new numbers in a row
+ * @property {Object} primeMaster - All prime numbers collected
+ * @property {Object} fibonacciMaster - All Fibonacci numbers collected
+ * @property {Object} levelMaster - Any number reaches level 4
+ * @property {Object} biasBuilder - Reach 50% bias
+ * @property {Object} persistent - Roll dice 1000 times
+ */
 const ACHIEVEMENTS = {
   first10: { 
     id: 'first10',
@@ -101,7 +143,12 @@ const ACHIEVEMENTS = {
   }
 };
 
-// Initialize game
+/**
+ * Initializes the game by setting up state, UI, events, and starting systems
+ * Checks for existing save data and loads it, or initializes fresh state
+ * @function initGame
+ * @returns {void}
+ */
 function initGame() {
   // Check if we have saved state first
   const hasSavedState = localStorage.getItem('numberGameState') !== null;
@@ -141,7 +188,12 @@ function initGame() {
   console.log('Game initialized');
 }
 
-// Event Listeners
+/**
+ * Sets up all DOM event listeners for game interactions
+ * Includes roll buttons, menu buttons, modal handlers, keyboard shortcuts, and lifecycle events
+ * @function setupEventListeners
+ * @returns {void}
+ */
 function setupEventListeners() {
   document.getElementById('manual-roll').addEventListener('click', performManualRoll);
   document.getElementById('auto-roll').addEventListener('click', toggleAutoRoll);
@@ -189,7 +241,14 @@ function setupEventListeners() {
   });
 }
 
-// Handle keyboard shortcuts
+/**
+ * Handles keyboard shortcuts for game controls
+ * Space/Enter: Manual roll, A: Toggle auto-roll
+ * Ignores input when user is typing in form fields
+ * @function handleKeyPress
+ * @param {KeyboardEvent} e - The keyboard event object
+ * @returns {void}
+ */
 function handleKeyPress(e) {
   // Ignore if user is typing in an input field
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -275,7 +334,12 @@ function toggleAutoRoll() {
   updateUI();
 }
 
-// Main roll logic
+/**
+ * Executes the main dice roll logic with bias calculation
+ * Generates a number (1-100), processes the result, updates stats, and saves state
+ * @function performRoll
+ * @returns {number} The rolled number
+ */
 function performRoll() {
   // Calculate current bias
   const bias = calculateBias();
@@ -298,7 +362,13 @@ function performRoll() {
   return roll;
 }
 
-// Roll with bias calculation
+/**
+ * Generates a dice roll result using bias to favor missing numbers
+ * Higher bias increases chance of rolling from missing/near-missing numbers
+ * @function rollWithBias
+ * @param {number} biasPercentage - The current bias percentage (0-85)
+ * @returns {number} The rolled number (1-100)
+ */
 function rollWithBias(biasPercentage) {
   const random = Math.random() * 100;
   
@@ -314,7 +384,12 @@ function rollWithBias(biasPercentage) {
   return Math.floor(Math.random() * 100) + 1;
 }
 
-// Get missing numbers (count = 0)
+/**
+ * Returns an array of all uncollected numbers (count = 0)
+ * Used for bias target selection and progress tracking
+ * @function getMissingNumbers
+ * @returns {number[]} Array of numbers from 1-100 that haven't been collected
+ */
 function getMissingNumbers() {
   const missing = [];
   for (let i = 1; i <= 100; i++) {
@@ -364,7 +439,14 @@ function selectBiasedTarget(biasPercentage) {
   return missingNumbers[Math.floor(Math.random() * missingNumbers.length)];
 }
 
-// Calculate current bias
+/**
+ * Calculates the current bias percentage based on leveled numbers and special properties
+ * Level bonuses: L1=0.8%, L2=2.0%, L3=4.5%, L4=8.0%
+ * Prime numbers get 1.5x multiplier, Fibonacci get 1.2x multiplier
+ * Maximum bias is capped at 85%
+ * @function calculateBias
+ * @returns {number} Current bias percentage (0-85)
+ */
 function calculateBias() {
   let totalBias = 0;
   
@@ -534,20 +616,49 @@ function calculateLevelProgress(count) {
   };
 }
 
-// Utility functions for special numbers
+/**
+ * Utility functions for special number identification
+ */
+
+/**
+ * Checks if a number is prime (provides 1.5x bias multiplier)
+ * @function isPrime
+ * @param {number} num - The number to check
+ * @returns {boolean} True if the number is prime
+ */
 function isPrime(num) {
   return PRIME_NUMBERS.includes(num);
 }
 
+/**
+ * Checks if a number is a Fibonacci number (provides 1.2x bias multiplier)
+ * @function isFibonacci
+ * @param {number} num - The number to check
+ * @returns {boolean} True if the number is in the Fibonacci sequence
+ */
 function isFibonacci(num) {
   return FIBONACCI_NUMBERS.includes(num);
 }
 
+/**
+ * Checks if a number is divisible by 5 (provides cooldown reduction when Level 1+)
+ * @function isDivisibleBy5
+ * @param {number} num - The number to check
+ * @returns {boolean} True if the number is divisible by 5
+ */
 function isDivisibleBy5(num) {
   return num % 5 === 0;
 }
 
-// Additional utility functions
+/**
+ * Additional utility functions for game state queries
+ */
+
+/**
+ * Returns an array of all collected numbers (count > 0)
+ * @function getCollectedNumbers
+ * @returns {number[]} Array of collected numbers
+ */
 function getCollectedNumbers() {
   return Object.keys(gameState.numbers)
     .filter(num => gameState.numbers[num].count > 0)
@@ -1089,10 +1200,22 @@ function positionTooltip(x, y) {
   tooltip.style.top = top + 'px';
 }
 
-// Save/Load Game State
-let saveTimeout = null;
-const SAVE_DEBOUNCE_DELAY = 1000; // 1 second debounce
+/**
+ * Save and load game state functions with error handling and validation
+ */
 
+/** @type {?number} Timeout ID for debounced save operations */
+let saveTimeout = null;
+
+/** @constant {number} SAVE_DEBOUNCE_DELAY - Debounce delay for saves in milliseconds */
+const SAVE_DEBOUNCE_DELAY = 1000;
+
+/**
+ * Saves the current game state to localStorage with debouncing
+ * Includes error handling for storage quota exceeded scenarios
+ * @function saveGameState
+ * @returns {void}
+ */
 function saveGameState() {
   // Clear existing timeout
   if (saveTimeout) {
@@ -1114,6 +1237,12 @@ function saveGameState() {
   }, SAVE_DEBOUNCE_DELAY);
 }
 
+/**
+ * Loads game state from localStorage with validation and error handling
+ * Includes backward compatibility and graceful fallback for corrupted data
+ * @function loadGameState
+ * @returns {void}
+ */
 function loadGameState() {
   try {
     const saved = localStorage.getItem('numberGameState');
