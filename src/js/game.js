@@ -441,6 +441,8 @@ function displayMilestone(milestone) {
     case 100:
       title = '100% Complete!';
       message = 'Congratulations! All numbers collected!';
+      // Trigger confetti for 100% completion
+      createConfetti();
       break;
   }
   
@@ -453,10 +455,35 @@ function displayMilestone(milestone) {
   // Show notification
   notification.classList.add('show');
   
-  // Hide after 3 seconds
+  // Hide after 3 seconds (5 seconds for 100%)
   setTimeout(() => {
     notification.classList.remove('show');
-  }, 3000);
+  }, milestone === 100 ? 5000 : 3000);
+}
+
+// Create confetti effect
+function createConfetti() {
+  const container = document.createElement('div');
+  container.className = 'confetti-container';
+  document.body.appendChild(container);
+  
+  // Create multiple confetti pieces
+  const confettiCount = 50;
+  for (let i = 0; i < confettiCount; i++) {
+    setTimeout(() => {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = Math.random() * 100 + '%';
+      confetti.style.animationDelay = Math.random() * 0.5 + 's';
+      confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+      container.appendChild(confetti);
+    }, i * 50); // Stagger creation for wave effect
+  }
+  
+  // Remove container after animation
+  setTimeout(() => {
+    container.remove();
+  }, 5000);
 }
 
 function getCooldownReduction() {
@@ -489,6 +516,13 @@ function displayRollResult(number, isNew, leveledUp) {
   // Add rolling animation
   resultContainer.classList.add('rolling');
   
+  // Animate button shake
+  const manualButton = document.getElementById('manual-roll');
+  if (!manualButton.disabled) {
+    manualButton.classList.add('rolling');
+    setTimeout(() => manualButton.classList.remove('rolling'), 500);
+  }
+  
   // Update the number display
   setTimeout(() => {
     resultNumber.textContent = number;
@@ -496,20 +530,88 @@ function displayRollResult(number, isNew, leveledUp) {
     if (leveledUp) {
       resultLabel.textContent = 'Level Up!';
       resultContainer.classList.add('level-up');
+      // Trigger level up animation on grid cell
+      animateGridCell(number, 'level-change');
     } else if (isNew) {
       resultLabel.textContent = 'New Number!';
       resultContainer.classList.add('new-number');
+      // Trigger pulse animation on grid cell
+      animateGridCell(number, 'pulse');
     } else {
       resultLabel.textContent = 'Rolled';
+      // Still pulse the cell but more subtly
+      animateGridCell(number, 'pulse');
     }
     
     resultContainer.classList.remove('rolling');
+    
+    // Create flying number effect
+    if (isNew || leveledUp) {
+      createFlyingNumber(number);
+    }
   }, 250);
   
   // Reset label after animation
   setTimeout(() => {
     resultContainer.classList.remove('new-number', 'level-up');
   }, 1000);
+}
+
+// Create flying number animation
+function createFlyingNumber(number) {
+  const resultContainer = document.getElementById('roll-result');
+  const targetCell = document.getElementById(`number-${number}`);
+  
+  if (!targetCell) return;
+  
+  // Get positions
+  const startRect = resultContainer.getBoundingClientRect();
+  const endRect = targetCell.getBoundingClientRect();
+  
+  // Create flying number element
+  const flyingNum = document.createElement('div');
+  flyingNum.className = 'flying-number';
+  flyingNum.textContent = number;
+  
+  // Set starting position
+  flyingNum.style.left = startRect.left + startRect.width / 2 + 'px';
+  flyingNum.style.top = startRect.top + startRect.height / 2 + 'px';
+  
+  // Calculate movement distance
+  const deltaX = endRect.left + endRect.width / 2 - (startRect.left + startRect.width / 2);
+  const deltaY = endRect.top + endRect.height / 2 - (startRect.top + startRect.height / 2);
+  
+  // Set CSS variables for animation endpoint
+  flyingNum.style.setProperty('--fly-x', deltaX + 'px');
+  flyingNum.style.setProperty('--fly-y', deltaY + 'px');
+  
+  // Add to document
+  document.body.appendChild(flyingNum);
+  
+  // Remove after animation
+  setTimeout(() => {
+    flyingNum.remove();
+  }, 1000);
+}
+
+// Animate grid cell
+function animateGridCell(number, animationClass) {
+  const cell = document.getElementById(`number-${number}`);
+  if (!cell) return;
+  
+  // Remove any existing animation classes
+  cell.classList.remove('pulse', 'level-change');
+  
+  // Force reflow to restart animation
+  void cell.offsetWidth;
+  
+  // Add new animation class
+  cell.classList.add(animationClass);
+  
+  // Remove animation class after completion
+  setTimeout(() => {
+    cell.classList.remove(animationClass);
+  }, 800);
 }
 
 // UI Updates

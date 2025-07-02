@@ -345,3 +345,119 @@ Die Implementierung wurde ausgiebig mit Puppeteer getestet:
    - Konfetti-Animation bei 100%
    - Verschiedene Progress Bar Styles
    - Sound-Effekte für Milestones
+
+## Phase 9: Animationen und Polish
+
+### Implementierte Features
+
+1. **Erweiterte Roll-Animationen**
+   - 3D-Rotationseffekte mit `rotateX` und `rotateY` für realistisches Würfel-Verhalten
+   - Dice-Shake Animation für den Roll-Button während des Würfelns
+   - Smooth transitions mit `cubic-bezier` für natürlichere Bewegungen
+
+2. **Flying Number Effect**
+   - Dynamische Positionsberechnung zwischen Roll-Result und Grid-Zelle
+   - CSS Custom Properties (`--fly-x`, `--fly-y`) für flexible Animation-Endpunkte
+   - Element wird nach Animation automatisch entfernt zur Performance-Optimierung
+
+3. **Grid Cell Animationen**
+   - Pulse-Effekt bei jedem Roll (subtiler bei bereits gesammelten Nummern)
+   - Level-Change Animation mit Rotation und Brightness-Filter
+   - Smooth color transitions beim Level-Wechsel
+
+4. **Enhanced Hover Effects**
+   - 3D-Transform mit `translateZ` für Tiefeneffekt
+   - Verstärkte Special-Number-Indikatoren beim Hover
+   - Z-Index Management für überlappende Elemente
+
+5. **Progress Bar Polish**
+   - Shimmer-Effekt mit animiertem Gradient
+   - Erweiterte Farbverläufe über mehrere Level-Farben
+   - Smooth cubic-bezier Transitions
+
+6. **Milestone Notifications**
+   - Slide-in Animation mit Bounce-Effekt
+   - Rotation während der Animation für dynamischeren Eindruck
+   - Längere Anzeigedauer bei 100% Completion
+
+7. **Confetti Effect**
+   - Einfache aber effektive Konfetti-Animation bei 100% Completion
+   - Gestaffelte Erstellung für Wellen-Effekt
+   - Verschiedene Größen und Farben basierend auf Level-Farben
+
+### Technische Erkenntnisse
+
+1. **Animation Performance**
+   - `transform` und `opacity` sind die performantesten Properties für Animationen
+   - `will-change` sollte sparsam eingesetzt werden
+   - Force Reflow mit `void element.offsetWidth` zum Neustarten von Animationen
+
+2. **CSS Animation Best Practices**
+   - Verwendung von `animation-fill-mode: forwards` für persistente End-States
+   - `transform-style: preserve-3d` für 3D-Effekte
+   - Kombinierte Transforms in einer Property für bessere Performance
+
+3. **JavaScript Animation Integration**
+   - Klassen-basierte Animation-Trigger für bessere Wartbarkeit
+   - Timeout-Management für Animation-Cleanup
+   - Event-basierte Animation-Ketten vermeiden zugunsten von Timeouts
+
+4. **Responsive Animations**
+   - Animations-Dauer sollte nicht von Viewport-Größe abhängen
+   - Transform-Werte können relativ sein, absolute Positionierung vermeiden
+   - Mobile Performance durch reduzierte Particle-Counts berücksichtigen
+
+### Herausforderungen und Lösungen
+
+1. **Flying Number Positionierung**
+   - Problem: Berechnung der korrekten Start- und Endpositionen
+   - Lösung: `getBoundingClientRect()` für präzise Viewport-Koordinaten
+   - CSS Variables für dynamische Animation-Endpunkte
+
+2. **Animation Timing**
+   - Problem: Überlappende Animationen führten zu visuellen Glitches
+   - Lösung: Sorgfältiges Timing mit gestaffelten Delays
+   - Cleanup-Funktionen nach Animation-Ende
+
+3. **Dark Mode Kompatibilität**
+   - Problem: Einige Animationseffekte waren im Dark Mode schlecht sichtbar
+   - Lösung: Verwendung von CSS Variables für Theme-abhängige Farben
+   - Opacity und Filter statt feste Farben für Effekte
+
+### Performance-Optimierungen
+
+1. **DOM Manipulation**
+   - Minimale DOM-Updates während Animationen
+   - Batch-Updates wo möglich
+   - Element-Recycling vermieden zugunsten von Create/Remove
+
+2. **CSS Optimierungen**
+   - Hardware-beschleunigte Properties (`transform`, `opacity`)
+   - Vermeidung von Layout-Thrashing
+   - Effiziente Selektoren ohne deep nesting
+
+3. **Memory Management**
+   - Timeout-Cleanup zur Vermeidung von Memory Leaks
+   - Event Listener werden zentral verwaltet
+   - Temporäre Elemente werden zuverlässig entfernt
+
+### Zukünftige Verbesserungen
+
+1. **Sound Integration**
+   - Web Audio API für dynamische Sound-Effekte
+   - Preloading von Audio-Assets
+   - Volume-Control und Mute-Option
+
+2. **Erweiterte Particle Effects**
+   - Canvas-basierte Particle-Systeme für komplexere Effekte
+   - GPU-beschleunigte Particles mit WebGL
+   - Physics-basierte Bewegungen
+
+3. **Accessibility**
+   - `prefers-reduced-motion` Media Query respektieren
+   - Alternative visuelle Indikatoren ohne Animation
+   - Screen Reader Announcements für wichtige Events
+
+### Fazit
+
+Phase 9 hat das Spiel durch durchdachte Animationen und Polish-Elemente deutlich aufgewertet. Die Balance zwischen visueller Attraktivität und Performance wurde durch moderne CSS-Techniken und effizientes JavaScript erreicht. Die modulare Struktur ermöglicht einfache Erweiterungen und Anpassungen der Animationen.

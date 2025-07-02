@@ -176,21 +176,134 @@ body {
 }
 
 @keyframes rollAnimation {
-  0% { transform: rotateX(0); opacity: 1; }
-  50% { transform: rotateX(90deg); opacity: 0.5; }
-  100% { transform: rotateX(0); opacity: 1; }
+  0% { 
+    transform: rotateX(0) rotateY(0) scale(1); 
+    opacity: 1; 
+  }
+  25% { 
+    transform: rotateX(180deg) rotateY(90deg) scale(0.95); 
+    opacity: 0.8; 
+  }
+  50% { 
+    transform: rotateX(360deg) rotateY(180deg) scale(0.9); 
+    opacity: 0.6; 
+  }
+  75% { 
+    transform: rotateX(540deg) rotateY(270deg) scale(0.95); 
+    opacity: 0.8; 
+  }
+  100% { 
+    transform: rotateX(720deg) rotateY(360deg) scale(1); 
+    opacity: 1; 
+  }
 }
 
 @keyframes newNumberPulse {
-  0% { transform: scale(1); box-shadow: 0 4px 12px var(--shadow-color); }
-  50% { transform: scale(1.1); box-shadow: 0 0 30px var(--level-1); }
-  100% { transform: scale(1); box-shadow: 0 4px 12px var(--shadow-color); }
+  0% { 
+    transform: scale(1); 
+    box-shadow: 0 4px 12px var(--shadow-color); 
+  }
+  25% { 
+    transform: scale(1.15); 
+    box-shadow: 0 0 30px var(--level-1), 0 0 50px rgba(40, 167, 69, 0.3); 
+  }
+  50% { 
+    transform: scale(1.1); 
+    box-shadow: 0 0 40px var(--level-1), 0 0 60px rgba(40, 167, 69, 0.4); 
+  }
+  75% { 
+    transform: scale(1.05); 
+    box-shadow: 0 0 30px var(--level-1), 0 0 50px rgba(40, 167, 69, 0.3); 
+  }
+  100% { 
+    transform: scale(1); 
+    box-shadow: 0 4px 12px var(--shadow-color); 
+  }
 }
 
 @keyframes levelUpGlow {
-  0% { box-shadow: 0 4px 12px var(--shadow-color); }
-  50% { box-shadow: 0 0 40px var(--level-4), inset 0 0 20px var(--level-4); }
-  100% { box-shadow: 0 4px 12px var(--shadow-color); }
+  0% { 
+    box-shadow: 0 4px 12px var(--shadow-color); 
+    background-color: var(--bg-secondary);
+  }
+  25% { 
+    box-shadow: 0 0 40px var(--level-4), inset 0 0 20px var(--level-4); 
+    background-color: rgba(253, 126, 20, 0.1);
+  }
+  50% { 
+    box-shadow: 0 0 60px var(--level-4), inset 0 0 30px var(--level-4); 
+    background-color: rgba(253, 126, 20, 0.2);
+  }
+  75% { 
+    box-shadow: 0 0 40px var(--level-4), inset 0 0 20px var(--level-4); 
+    background-color: rgba(253, 126, 20, 0.1);
+  }
+  100% { 
+    box-shadow: 0 4px 12px var(--shadow-color); 
+    background-color: var(--bg-secondary);
+  }
+}
+
+@keyframes numberFlyToGrid {
+  0% {
+    transform: translate(0, 0) scale(2);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(0, 0) scale(1.5);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--fly-x), var(--fly-y)) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes diceShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+@keyframes gridCellPulse {
+  0% { 
+    transform: scale(1); 
+    filter: brightness(1);
+  }
+  50% { 
+    transform: scale(1.2); 
+    filter: brightness(1.3);
+  }
+  100% { 
+    transform: scale(1); 
+    filter: brightness(1);
+  }
+}
+
+@keyframes levelTransition {
+  0% { 
+    transform: scale(1) rotate(0deg); 
+    filter: brightness(1);
+  }
+  50% { 
+    transform: scale(1.1) rotate(180deg); 
+    filter: brightness(1.5);
+  }
+  100% { 
+    transform: scale(1) rotate(360deg); 
+    filter: brightness(1);
+  }
+}
+
+@keyframes floatIn {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Controls */
@@ -222,19 +335,25 @@ body {
 
 .roll-button:hover:not(:disabled) {
   background-color: var(--button-primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px var(--shadow-color);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 20px var(--shadow-color);
 }
 
 .roll-button:disabled {
   background-color: var(--button-disabled);
   cursor: not-allowed;
   transform: none;
+  opacity: 0.7;
 }
 
 .roll-button:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px var(--shadow-color);
+  transform: translateY(-1px) scale(0.98);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  transition: all 0.1s ease;
+}
+
+.roll-button.rolling {
+  animation: diceShake 0.5s ease-in-out;
 }
 
 .button-text {
@@ -286,36 +405,59 @@ body {
   font-weight: bold;
   font-size: 0.9rem;
   cursor: default;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background-color: var(--level-0);
   color: var(--level-0-text);
   position: relative;
+  transform-style: preserve-3d;
 }
 
 .number-cell:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px var(--shadow-color);
+  transform: scale(1.1) translateZ(10px);
+  box-shadow: 0 8px 16px var(--shadow-color);
+  z-index: 10;
+}
+
+.number-cell.pulse {
+  animation: gridCellPulse 0.6s ease-out;
+}
+
+.number-cell.level-change {
+  animation: levelTransition 0.8s ease-out;
 }
 
 /* Number Level Styles */
 .number-cell.level-1 {
   background-color: var(--level-1);
   color: var(--level-1-text);
+  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s ease,
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .number-cell.level-2 {
   background-color: var(--level-2);
   color: var(--level-2-text);
+  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s ease,
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .number-cell.level-3 {
   background-color: var(--level-3);
   color: var(--level-3-text);
+  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s ease,
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .number-cell.level-4 {
   background-color: var(--level-4);
   color: var(--level-4-text);
+  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s ease,
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 15px rgba(253, 126, 20, 0.3);
 }
 
 /* Collected indicator */
@@ -332,6 +474,8 @@ body {
   right: 2px;
   font-size: 0.6rem;
   opacity: 0.7;
+  transition: all 0.3s ease;
+  animation: floatIn 0.5s ease-out;
 }
 
 .number-cell.fibonacci::after {
@@ -341,10 +485,23 @@ body {
   left: 2px;
   font-size: 0.6rem;
   opacity: 0.7;
+  transition: all 0.3s ease;
+  animation: floatIn 0.5s ease-out 0.1s both;
 }
 
 .number-cell.divisible-by-5 {
   box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.5);
+  transition: box-shadow 0.3s ease;
+}
+
+.number-cell.prime:hover::before,
+.number-cell.fibonacci:hover::after {
+  opacity: 1;
+  transform: scale(1.3);
+}
+
+.number-cell.divisible-by-5:hover {
+  box-shadow: inset 0 0 0 2px rgba(255, 215, 0, 0.8);
 }
 
 /* Tooltip Styles */
@@ -441,10 +598,35 @@ body {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--level-1), var(--level-2));
+  background: linear-gradient(90deg, var(--level-1), var(--level-2), var(--level-3));
   width: 0%;
-  transition: width 0.5s ease;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .progress-text {
@@ -457,6 +639,17 @@ body {
   color: var(--text-primary);
   text-shadow: 0 1px 2px var(--shadow-color);
   z-index: 1;
+}
+
+/* Flying Number Effect */
+.flying-number {
+  position: fixed;
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  pointer-events: none;
+  z-index: 3000;
+  animation: numberFlyToGrid 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 /* Milestone Notifications */
@@ -479,6 +672,21 @@ body {
 .milestone-notification.show {
   opacity: 1;
   transform: translateY(0);
+  animation: milestoneSlideIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes milestoneSlideIn {
+  0% {
+    transform: translateX(400px) rotate(10deg);
+    opacity: 0;
+  }
+  70% {
+    transform: translateX(-20px) rotate(-2deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg);
+    opacity: 1;
+  }
 }
 
 .milestone-title {
@@ -501,6 +709,58 @@ body {
 .stat-value.stat-update {
   transform: scale(1.1);
   color: var(--button-primary);
+}
+
+/* Confetti Animation */
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 9999;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: var(--level-1);
+  animation: confettiFall 3s linear forwards;
+}
+
+.confetti:nth-child(2n) {
+  background-color: var(--level-2);
+  width: 8px;
+  height: 8px;
+  animation-duration: 3.5s;
+}
+
+.confetti:nth-child(3n) {
+  background-color: var(--level-3);
+  width: 12px;
+  height: 12px;
+  animation-duration: 2.5s;
+}
+
+.confetti:nth-child(4n) {
+  background-color: var(--level-4);
+  width: 6px;
+  height: 6px;
+  animation-duration: 4s;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
 }
 
 /* Responsive Design */
