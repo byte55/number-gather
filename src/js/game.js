@@ -67,6 +67,28 @@ function initGame() {
 function setupEventListeners() {
   document.getElementById('manual-roll').addEventListener('click', performManualRoll);
   document.getElementById('auto-roll').addEventListener('click', toggleAutoRoll);
+  
+  // Keyboard shortcuts
+  document.addEventListener('keydown', handleKeyPress);
+}
+
+// Handle keyboard shortcuts
+function handleKeyPress(e) {
+  // Ignore if user is typing in an input field
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  
+  switch (e.key) {
+    case ' ':  // Space
+    case 'Enter':
+      e.preventDefault();
+      performManualRoll();
+      break;
+    case 'a':
+    case 'A':
+      e.preventDefault();
+      toggleAutoRoll();
+      break;
+  }
 }
 
 // Manual Roll
@@ -217,9 +239,13 @@ function calculateBias() {
 // Process roll result
 function processRollResult(number) {
   const wasNew = gameState.numbers[number].count === 0;
+  const oldLevel = gameState.numbers[number].level;
   
   // Use the updateNumber utility
   updateNumber(number, 1);
+  
+  const newLevel = gameState.numbers[number].level;
+  const leveledUp = newLevel > oldLevel;
   
   // Update collected count if new
   if (wasNew) {
@@ -230,6 +256,9 @@ function processRollResult(number) {
       gameState.cooldowns.auto.unlocked = true;
     }
   }
+  
+  // Update roll result display
+  displayRollResult(number, wasNew, leveledUp);
 }
 
 // Cooldown management
@@ -387,6 +416,41 @@ function getCooldownReduction() {
   return Math.min(reduction, 85);
 }
 
+// Display roll result with animations
+function displayRollResult(number, isNew, leveledUp) {
+  const resultContainer = document.getElementById('roll-result');
+  const resultLabel = resultContainer.querySelector('.roll-result-label');
+  const resultNumber = document.getElementById('roll-result-number');
+  
+  // Remove previous animation classes
+  resultContainer.classList.remove('rolling', 'new-number', 'level-up');
+  
+  // Add rolling animation
+  resultContainer.classList.add('rolling');
+  
+  // Update the number display
+  setTimeout(() => {
+    resultNumber.textContent = number;
+    
+    if (leveledUp) {
+      resultLabel.textContent = 'Level Up!';
+      resultContainer.classList.add('level-up');
+    } else if (isNew) {
+      resultLabel.textContent = 'New Number!';
+      resultContainer.classList.add('new-number');
+    } else {
+      resultLabel.textContent = 'Rolled';
+    }
+    
+    resultContainer.classList.remove('rolling');
+  }, 250);
+  
+  // Reset label after animation
+  setTimeout(() => {
+    resultContainer.classList.remove('new-number', 'level-up');
+  }, 1000);
+}
+
 // UI Updates
 function updateUI() {
   updateStats();
@@ -412,27 +476,44 @@ function updateButtons() {
   const autoButton = document.getElementById('auto-roll');
   const manualCooldown = document.getElementById('manual-cooldown');
   const autoCooldown = document.getElementById('auto-cooldown');
+  const manualProgress = document.getElementById('manual-progress');
+  const autoProgress = document.getElementById('auto-progress');
   
   // Manual button
   manualButton.disabled = gameState.cooldowns.manual.active;
   if (gameState.cooldowns.manual.active) {
     const seconds = Math.ceil(gameState.cooldowns.manual.remaining / 1000);
     manualCooldown.textContent = `${seconds}s`;
+    
+    // Update progress bar
+    const reduction = getCooldownReduction();
+    const totalCooldown = COOLDOWN_MANUAL * (1 - reduction / 100);
+    const progress = ((totalCooldown - gameState.cooldowns.manual.remaining) / totalCooldown) * 100;
+    manualProgress.style.width = `${progress}%`;
   } else {
     manualCooldown.textContent = '';
+    manualProgress.style.width = '0%';
   }
   
   // Auto button
   autoButton.disabled = !gameState.cooldowns.auto.unlocked;
   if (!gameState.cooldowns.auto.unlocked) {
     autoCooldown.textContent = `Unlock at ${UNLOCK_AUTO_THRESHOLD} numbers`;
+    autoProgress.style.width = '0%';
   } else if (gameState.cooldowns.auto.active) {
     const seconds = Math.ceil(gameState.cooldowns.auto.remaining / 1000);
     autoCooldown.textContent = `${seconds}s`;
     autoButton.querySelector('.button-text').textContent = 'Stop Auto';
+    
+    // Update progress bar
+    const reduction = getCooldownReduction();
+    const totalCooldown = COOLDOWN_AUTO * (1 - reduction / 100);
+    const progress = ((totalCooldown - gameState.cooldowns.auto.remaining) / totalCooldown) * 100;
+    autoProgress.style.width = `${progress}%`;
   } else {
     autoCooldown.textContent = '';
     autoButton.querySelector('.button-text').textContent = 'Auto Roll';
+    autoProgress.style.width = '0%';
   }
 }
 

@@ -27,14 +27,23 @@
         </header>
 
         <main class="game-main">
+            <div class="roll-result-container" id="roll-result-container">
+                <div class="roll-result" id="roll-result">
+                    <span class="roll-result-label">Press Roll to Start</span>
+                    <span class="roll-result-number" id="roll-result-number"></span>
+                </div>
+            </div>
+
             <div class="controls-container">
                 <button id="manual-roll" class="roll-button">
                     <span class="button-text">Roll Dice</span>
                     <span class="cooldown-text" id="manual-cooldown"></span>
+                    <div class="cooldown-progress" id="manual-progress"></div>
                 </button>
                 <button id="auto-roll" class="roll-button auto-roll" disabled>
                     <span class="button-text">Auto Roll</span>
                     <span class="cooldown-text" id="auto-cooldown"></span>
+                    <div class="cooldown-progress" id="auto-progress"></div>
                 </button>
             </div>
 
