@@ -70,6 +70,22 @@ function setupEventListeners() {
   
   // Keyboard shortcuts
   document.addEventListener('keydown', handleKeyPress);
+  
+  // Handle visibility change (tab becomes inactive/active)
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  
+  // Save state when page is about to unload
+  window.addEventListener('beforeunload', () => {
+    // Force immediate save on page unload
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+      try {
+        localStorage.setItem('numberGameState', JSON.stringify(gameState));
+      } catch (error) {
+        console.error('Failed to save on unload:', error);
+      }
+    }
+  });
 }
 
 // Handle keyboard shortcuts
@@ -91,10 +107,52 @@ function handleKeyPress(e) {
   }
 }
 
+// Handle tab visibility changes
+let tabInactiveTime = 0;
+function handleVisibilityChange() {
+  if (document.hidden) {
+    // Tab became inactive - record the time
+    tabInactiveTime = Date.now();
+    console.log('Tab became inactive');
+  } else {
+    // Tab became active - adjust cooldowns
+    if (tabInactiveTime > 0) {
+      const inactiveDuration = Date.now() - tabInactiveTime;
+      console.log(`Tab was inactive for ${inactiveDuration}ms`);
+      
+      // Adjust cooldowns for time passed while inactive
+      if (gameState.cooldowns.manual.active) {
+        gameState.cooldowns.manual.remaining = Math.max(0, gameState.cooldowns.manual.remaining - inactiveDuration);
+        if (gameState.cooldowns.manual.remaining === 0) {
+          gameState.cooldowns.manual.active = false;
+        }
+      }
+      
+      if (gameState.cooldowns.auto.active) {
+        gameState.cooldowns.auto.remaining = Math.max(0, gameState.cooldowns.auto.remaining - inactiveDuration);
+      }
+      
+      tabInactiveTime = 0;
+      updateUI();
+    }
+  }
+}
+
 // Manual Roll
+let lastManualClick = 0;
+const CLICK_THROTTLE = 100; // Minimum 100ms between clicks
+
 function performManualRoll() {
+  const now = Date.now();
+  
+  // Prevent rapid clicks
+  if (now - lastManualClick < CLICK_THROTTLE) {
+    return;
+  }
+  
   if (gameState.cooldowns.manual.active) return;
   
+  lastManualClick = now;
   performRoll();
   startManualCooldown();
 }
@@ -564,34 +622,37 @@ function createFlyingNumber(number) {
   
   if (!targetCell) return;
   
-  // Get positions
-  const startRect = resultContainer.getBoundingClientRect();
-  const endRect = targetCell.getBoundingClientRect();
-  
-  // Create flying number element
-  const flyingNum = document.createElement('div');
-  flyingNum.className = 'flying-number';
-  flyingNum.textContent = number;
-  
-  // Set starting position
-  flyingNum.style.left = startRect.left + startRect.width / 2 + 'px';
-  flyingNum.style.top = startRect.top + startRect.height / 2 + 'px';
-  
-  // Calculate movement distance
-  const deltaX = endRect.left + endRect.width / 2 - (startRect.left + startRect.width / 2);
-  const deltaY = endRect.top + endRect.height / 2 - (startRect.top + startRect.height / 2);
-  
-  // Set CSS variables for animation endpoint
-  flyingNum.style.setProperty('--fly-x', deltaX + 'px');
-  flyingNum.style.setProperty('--fly-y', deltaY + 'px');
-  
-  // Add to document
-  document.body.appendChild(flyingNum);
-  
-  // Remove after animation
-  setTimeout(() => {
-    flyingNum.remove();
-  }, 1000);
+  // Use requestAnimationFrame for smooth animation start
+  requestAnimationFrame(() => {
+    // Get positions
+    const startRect = resultContainer.getBoundingClientRect();
+    const endRect = targetCell.getBoundingClientRect();
+    
+    // Create flying number element
+    const flyingNum = document.createElement('div');
+    flyingNum.className = 'flying-number';
+    flyingNum.textContent = number;
+    
+    // Set starting position
+    flyingNum.style.left = startRect.left + startRect.width / 2 + 'px';
+    flyingNum.style.top = startRect.top + startRect.height / 2 + 'px';
+    
+    // Calculate movement distance
+    const deltaX = endRect.left + endRect.width / 2 - (startRect.left + startRect.width / 2);
+    const deltaY = endRect.top + endRect.height / 2 - (startRect.top + startRect.height / 2);
+    
+    // Set CSS variables for animation endpoint
+    flyingNum.style.setProperty('--fly-x', deltaX + 'px');
+    flyingNum.style.setProperty('--fly-y', deltaY + 'px');
+    
+    // Add to document
+    document.body.appendChild(flyingNum);
+    
+    // Remove after animation
+    setTimeout(() => {
+      flyingNum.remove();
+    }, 1000);
+  });
 }
 
 // Animate grid cell
@@ -615,10 +676,47 @@ function animateGridCell(number, animationClass) {
 }
 
 // UI Updates
+let updateScheduled = false;
+let pendingUpdates = {
+  stats: false,
+  buttons: false,
+  grid: false
+};
+
 function updateUI() {
-  updateStats();
-  updateButtons();
-  updateGrid();
+  // Mark all updates as pending
+  pendingUpdates.stats = true;
+  pendingUpdates.buttons = true;
+  pendingUpdates.grid = true;
+  
+  scheduleUpdate();
+}
+
+function scheduleUpdate() {
+  if (!updateScheduled) {
+    updateScheduled = true;
+    requestAnimationFrame(performBatchUpdate);
+  }
+}
+
+function performBatchUpdate() {
+  // Perform all pending updates
+  if (pendingUpdates.stats) {
+    updateStats();
+    pendingUpdates.stats = false;
+  }
+  
+  if (pendingUpdates.buttons) {
+    updateButtons();
+    pendingUpdates.buttons = false;
+  }
+  
+  if (pendingUpdates.grid) {
+    updateGrid();
+    pendingUpdates.grid = false;
+  }
+  
+  updateScheduled = false;
 }
 
 function updateStats() {
@@ -883,12 +981,28 @@ function positionTooltip(x, y) {
 }
 
 // Save/Load Game State
+let saveTimeout = null;
+const SAVE_DEBOUNCE_DELAY = 1000; // 1 second debounce
+
 function saveGameState() {
-  try {
-    localStorage.setItem('numberGameState', JSON.stringify(gameState));
-  } catch (error) {
-    console.error('Failed to save game state:', error);
+  // Clear existing timeout
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
   }
+  
+  // Debounce the save operation
+  saveTimeout = setTimeout(() => {
+    try {
+      localStorage.setItem('numberGameState', JSON.stringify(gameState));
+      console.log('Game state saved');
+    } catch (error) {
+      console.error('Failed to save game state:', error);
+      // Handle storage quota exceeded
+      if (error.name === 'QuotaExceededError') {
+        console.warn('LocalStorage quota exceeded. Consider clearing old data.');
+      }
+    }
+  }, SAVE_DEBOUNCE_DELAY);
 }
 
 function loadGameState() {
